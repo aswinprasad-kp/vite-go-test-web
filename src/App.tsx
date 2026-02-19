@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 
+const DB_URL = import.meta.env.VITE_GO_SB_DB_URL || "http://localhost:8080/";
+
 interface Claim {
   id: number,
   merchant: string,
@@ -11,7 +13,7 @@ function App() {
 
   useEffect(() => {
     // 1. Fetch data from YOUR Go Backend
-    fetch('http://localhost:8080/api/claims')
+    fetch(`${DB_URL}api/claims`)
       .then(res => res.json())
       .then(data => setClaims(data))
       .catch(err => console.error("Failed to fetch backend:", err))
