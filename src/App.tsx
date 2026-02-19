@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-const DB_URL = import.meta.env.VITE_GO_SB_DB_URL || "http://localhost:8080/";
+const DB_URL = import.meta.env.VITE_SB_PROJECT_URL || "http://localhost:8080/";
 
 interface Claim {
   id: number,
