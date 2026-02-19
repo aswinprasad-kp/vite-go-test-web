@@ -1,55 +1,48 @@
-name: FE Preview Deployment
+name: FE Production Deployment
 
 on:
   pull_request:
     types: [labeled]
 
 permissions:
+  contents: read
   pull-requests: write
-  issues: write
 
 env:
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
 jobs:
-  Deploy-Preview:
+  Deploy-Prod:
     if: github.event.label.name == 'Ok to deploy in staging'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Install Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
 
       - name: Pull Vercel Environment Information
-        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Build Project Artifacts
-        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
-      - name: Deploy to Vercel Preview
-        id: deploy # We added this ID so the next step can reference it
+      - name: Deploy to Vercel Production
+        id: deploy
         run: |
-          # Capture the URL in a variable and write it to GitHub's internal output state
           DEPLOY_URL=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
           echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
 
-      - name: Comment PR with Preview URL
+      - name: Comment PR
         uses: actions/github-script@v7
         with:
           script: |
-            // We pull the URL directly from the previous step's memory output
             const url = "${{ steps.deploy.outputs.url }}";
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `🚀 **Preview Deployment Ready!**\n\nTest your changes here: ${url}`
+              body: `🚀 **Production Deployment Live!**\n\nURL: ${url}`
             })
