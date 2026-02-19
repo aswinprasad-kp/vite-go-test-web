@@ -38,7 +38,7 @@ jobs:
         id: deploy # We added this ID so the next step can reference it
         run: |
           # Capture the URL in a variable and write it to GitHub's internal output state
-          DEPLOY_URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+          DEPLOY_URL=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
           echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
 
       - name: Comment PR with Preview URL
