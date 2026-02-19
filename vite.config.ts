@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     server: {
       proxy: {
-        // This catches /api, /auth, /db, and anything else you add in Go
+        // This regex perfectly matches your vercel.json rewrites!
         '^/(api|auth|db|v1)/.*': {
           target: BACKEND_URL,
           changeOrigin: true,
