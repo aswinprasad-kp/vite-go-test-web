@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react'
-
-// No more DB_URL constant needed here. 
-// The proxy handles the routing based on the environment.
+import Login from './login' // Assuming Login.tsx is in the same folder
 
 interface Claim {
   id: number,
@@ -9,27 +7,56 @@ interface Claim {
   amount: number
 }
 
+interface UserProfile {
+  email: string;
+  token: string;
+}
+
 function App() {
   const [claims, setClaims] = useState<Claim[]>([])
+  const [user, setUser] = useState<UserProfile | null>(null)
 
+  // 1. Fetch claims ONLY when we have a user token
   useEffect(() => {
-    // We use a relative path. Vite (local) or Vercel (prod) 
-    // will intercept this and forward it to the correct backend.
-    fetch('/api/claims')
+    if (!user) return;
+
+    fetch('/api/claims', {
+      headers: {
+        // Send the token we got from our Go backend
+        'Authorization': `Bearer ${user.token}`
+      }
+    })
       .then(res => {
-        if (!res.ok) throw new Error("Network response was not ok");
+        if (res.status === 401) {
+          setUser(null); // Token expired or invalid
+          throw new Error("Unauthorized");
+        }
         return res.json();
       })
       .then(data => setClaims(data))
       .catch(err => console.error("Failed to fetch backend:", err))
-  }, [])
+  }, [user]) // Re-run when user logs in
+
+  // 2. Conditional Rendering
+  if (!user) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <Login onAuthSuccess={(userData: UserProfile) => setUser(userData)} />
+      </div>
+    )
+  }
 
   return (
     <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
-      <h1>💸 XpenseOps Dashboard</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1>💸 XpenseOps Dashboard</h1>
+        <button onClick={() => setUser(null)} style={{ height: '30px' }}>Logout</button>
+      </div>
+      <p>Welcome, <strong>{user.email}</strong></p>
       <hr />
+      
       {claims.length === 0 ? (
-        <p>Wait a moment... waking up the backend on Render...</p>
+        <p>No claims found or loading...</p>
       ) : (
         <div style={{ marginTop: '20px' }}>
           <h3>Recent Claims</h3>
