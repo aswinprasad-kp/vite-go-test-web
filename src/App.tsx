@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import Login from './login' // Assuming Login.tsx is in the same folder
+import Login from './Login' // Assuming Login.tsx is in the same folder
 
 interface Claim {
   id: number,
