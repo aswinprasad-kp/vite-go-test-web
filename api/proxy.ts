@@ -2,10 +2,10 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Pulls the hidden Render URL from Vercel's Environment Variables
-  const targetHost = process.env.RENDER_BACKEND_URL; 
+  const targetHost = process.env.VITE_BE_URL; 
 
   if (!targetHost) {
-    return res.status(500).json({ error: "RENDER_BACKEND_URL is missing in Vercel settings" });
+    return res.status(500).json({ error: "VITE_BE_URL is missing in Vercel settings" });
   }
 
   // req.url contains the full path (e.g., /api/claims or /auth/login)
