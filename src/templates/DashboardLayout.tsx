@@ -21,15 +21,15 @@ export default function DashboardLayout({ user, onLogout }: DashboardLayoutProps
   const title = route?.title ?? 'Claims';
 
   return (
-    <Layout className="flex min-h-screen w-full bg-gray-50">
+    <Layout className="flex min-h-screen w-full bg-gradient-to-b from-slate-50 to-slate-100/80">
       <Sidebar user={user} onLogout={onLogout} permissions={permissions} />
       <Layout className="min-w-0 flex flex-1 flex-col">
-        <div className="flex shrink-0 items-center justify-between border-b border-gray-200 bg-white px-6 py-2">
+        <div className="flex shrink-0 items-center justify-between border-b border-slate-200/80 bg-white/90 px-6 py-3 shadow-sm backdrop-blur-sm">
           <TitleBar user={user} title={title} />
           <NotificationCenter />
         </div>
         <Content className="min-h-0 flex-1 overflow-auto p-6">
-          <div className="h-full w-full rounded-lg bg-white p-6 shadow-sm">
+          <div className="h-full w-full rounded-xl border border-slate-200/60 bg-white p-6 shadow-md shadow-slate-200/40">
             <Outlet />
           </div>
         </Content>

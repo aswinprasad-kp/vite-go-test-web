@@ -28,10 +28,13 @@ export default function Sidebar({ user, onLogout, permissions = [] }: SidebarPro
     <Sider
       theme="light"
       width={220}
-      className="min-h-screen border-r bg-[var(--xpense-sidebar-bg)] [border-color:var(--xpense-border)]"
+      className="min-h-screen border-r border-slate-200/80 bg-white shadow-sm"
     >
-      <div className="flex h-16 items-center border-b px-4 [border-color:var(--xpense-border)]">
-        <span className="text-lg font-semibold [color:var(--xpense-text)]">XpenseOps</span>
+      <div className="flex h-16 items-center gap-2 border-b border-slate-200/80 px-4">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--xpense-primary)] to-indigo-600 text-sm font-bold text-white shadow">
+          X
+        </div>
+        <span className="text-lg font-semibold text-slate-800">XpenseOps</span>
       </div>
       <Menu
         mode="inline"
@@ -40,14 +43,14 @@ export default function Sidebar({ user, onLogout, permissions = [] }: SidebarPro
         className="mt-2 border-none"
         style={{ height: 'calc(100vh - 8rem)' }}
       />
-      <div className="absolute bottom-0 left-0 right-0 border-t bg-[var(--xpense-sidebar-bg)] p-3 [border-color:var(--xpense-border)]">
-        <p className="truncate text-xs [color:var(--xpense-text-muted)]" title={user.email}>
+      <div className="absolute bottom-0 left-0 right-0 border-t border-slate-200/80 bg-slate-50/80 p-3">
+        <p className="truncate text-xs text-slate-500" title={user.email}>
           {user.email}
         </p>
         <button
           type="button"
           onClick={onLogout}
-          className="mt-2 w-full rounded border px-3 py-1.5 text-sm font-medium shadow-sm [background:var(--xpense-btn-secondary-bg)] [border-color:var(--xpense-btn-secondary-border)] [color:var(--xpense-btn-secondary-text)] hover:[background:var(--xpense-btn-secondary-hover-bg)]"
+          className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-900"
         >
           Logout
         </button>

@@ -23,24 +23,24 @@ export default function TitleBar({ user, title = 'Claims' }: TitleBarProps) {
 
   const displayName = user.displayName ?? user.name;
   return (
-    <header className="flex h-14 flex-1 items-center justify-between border-b bg-[var(--xpense-header-bg)] px-6 [border-color:var(--xpense-border)]">
-      <h1 className="text-lg font-semibold [color:var(--xpense-text)]">{title}</h1>
+    <header className="flex flex-1 items-center justify-between">
+      <h1 className="text-xl font-semibold tracking-tight text-slate-800">{title}</h1>
       <div className="flex items-center gap-4">
         <Badge
           status="success"
-          text={<span className="text-sm [color:var(--xpense-text-secondary)]">{role.text}</span>}
+          text={<span className="text-sm text-slate-500">{role.text}</span>}
         />
         <Dropdown menu={{ items: menuItems }} trigger={['click']} placement="bottomRight">
           <button
             type="button"
-            className="flex items-center gap-2 rounded-lg border px-2 py-1.5 text-left focus:outline-none [background:var(--xpense-btn-secondary-hover-bg)] [border-color:var(--xpense-border)] hover:[background:var(--xpense-border-light)]"
+            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-left shadow-sm transition-colors hover:bg-slate-50 focus:outline-none"
           >
             <img
               src={user.picture}
               alt={displayName}
-              className="h-8 w-8 rounded-full border object-cover [border-color:var(--xpense-border)]"
+              className="h-8 w-8 rounded-full border-2 border-slate-100 object-cover"
             />
-            <span className="max-w-[160px] truncate text-sm font-medium [color:var(--xpense-text)]">
+            <span className="max-w-[160px] truncate text-sm font-medium text-slate-700">
               {displayName}
             </span>
           </button>

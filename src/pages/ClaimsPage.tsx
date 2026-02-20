@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Modal } from 'antd';
 import { DEFAULT_PAGE_SIZE } from '../core-utils/types/pagination';
+import { useAuth } from '../hooks/useAuth';
 import { useClaims } from '../hooks/useClaims';
 import { useCreateClaim, useUpdateClaimStatus } from '../hooks/useClaimsMutation';
 import { usePermissions } from '../hooks/usePermissions';
@@ -14,6 +15,7 @@ import type { CreateClaimRequest } from '../types/claim';
  * Used when route is /claims and user has xpensepanel:claims:view.
  */
 export default function ClaimsPage() {
+  const { user } = useAuth();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const { items, total, isLoading, error, mutate } = useClaims(page, pageSize);
@@ -27,7 +29,13 @@ export default function ClaimsPage() {
     mutate();
   });
 
-  const canAct = permissions.includes('xpensepanel:claims:approve');
+  const canAct =
+    permissions.includes('xpensepanel:claims:approve') ||
+    permissions.includes('xpense:claims:approve');
+  const canDisburse =
+    permissions.includes('xpensepanel:claims:disburse') ||
+    permissions.includes('xpense:claims:disburse');
+  const currentUserId = user?.uid;
 
   const handlePageChange = (p: number, ps: number) => {
     setPage(p);
@@ -43,6 +51,15 @@ export default function ClaimsPage() {
     });
   };
 
+  const handleSubmit = (claim: Claim) => {
+    Modal.confirm({
+      title: 'Submit claim',
+      content: `Submit this claim for approval?`,
+      okText: 'Submit',
+      onOk: () => updateClaimStatus(claim.id, { status: 'pending' }),
+    });
+  };
+
   const handleReject = (claim: Claim) => {
     Modal.confirm({
       title: 'Reject claim',
@@ -50,6 +67,15 @@ export default function ClaimsPage() {
       okText: 'Reject',
       okButtonProps: { danger: true },
       onOk: () => updateClaimStatus(claim.id, { status: 'rejected' }),
+    });
+  };
+
+  const handleDisburse = (claim: Claim) => {
+    Modal.confirm({
+      title: 'Mark as disbursed',
+      content: `Mark claim for $${claim.amount} as disbursed?`,
+      okText: 'Disburse',
+      onOk: () => updateClaimStatus(claim.id, { status: 'disbursed' }),
     });
   };
 
@@ -76,9 +102,13 @@ export default function ClaimsPage() {
         pageSize={pageSize}
         onPageChange={handlePageChange}
         loading={isLoading || isUpdating}
+        currentUserId={currentUserId}
         canAct={canAct}
+        canDisburse={canDisburse}
         onApprove={handleApprove}
         onReject={handleReject}
+        onSubmit={handleSubmit}
+        onDisburse={handleDisburse}
         onNewClaim={() => setCreateModalOpen(true)}
       />
       <CreateClaimModal
