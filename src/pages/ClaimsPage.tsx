@@ -1,14 +1,14 @@
 import { useState } from 'react';
-import { Modal } from 'antd';
+import { Input, Modal } from 'antd';
 import { DEFAULT_PAGE_SIZE } from '../core-utils/types/pagination';
 import { useAuth } from '../hooks/useAuth';
 import { useClaims } from '../hooks/useClaims';
-import { useCreateClaim, useUpdateClaimStatus } from '../hooks/useClaimsMutation';
+import { useUpdateClaimStatus } from '../hooks/useClaimsMutation';
 import { usePermissions } from '../hooks/usePermissions';
+import ClaimComparisonModal from '../components/claims/ClaimComparisonModal';
 import CreateClaimModal from '../components/CreateClaimModal';
 import Dashboard from './Dashboard';
 import type { Claim } from '../types/claim';
-import type { CreateClaimRequest } from '../types/claim';
 
 /**
  * Claims page container: owns hooks, handlers, and composes Dashboard + CreateClaimModal.
@@ -20,14 +20,12 @@ export default function ClaimsPage() {
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const { items, total, isLoading, error, mutate } = useClaims(page, pageSize);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [comparisonClaim, setComparisonClaim] = useState<Claim | null>(null);
+  const [approveModal, setApproveModal] = useState<{ claim: Claim; reason: string } | null>(null);
+  const [rejectModal, setRejectModal] = useState<{ claim: Claim; reason: string } | null>(null);
 
   const { permissions } = usePermissions();
-  const { createClaim, isCreating, createError } = useCreateClaim(() => {
-    mutate();
-  });
-  const { updateClaimStatus, isUpdating } = useUpdateClaimStatus(() => {
-    mutate();
-  });
+  const { updateClaimStatus, isUpdating } = useUpdateClaimStatus(() => mutate());
 
   const canAct =
     permissions.includes('xpensepanel:claims:approve') ||
@@ -42,13 +40,20 @@ export default function ClaimsPage() {
     setPageSize(ps);
   };
 
+  const needsReasonForApprove = (c: Claim) => c.needSupervision === 'high';
+
   const handleApprove = (claim: Claim) => {
-    Modal.confirm({
-      title: 'Approve claim',
-      content: `Approve claim for $${claim.amount}?`,
-      okText: 'Approve',
-      onOk: () => updateClaimStatus(claim.id, { status: 'approved' }),
-    });
+    setApproveModal({ claim, reason: '' });
+  };
+
+  const handleApproveOk = async () => {
+    if (!approveModal) return;
+    const { claim, reason } = approveModal;
+    if (needsReasonForApprove(claim) && !reason.trim()) {
+      return; // block submit; user must enter reason
+    }
+    await updateClaimStatus(claim.id, { status: 'approved', reason: reason.trim() || undefined });
+    setApproveModal(null);
   };
 
   const handleSubmit = (claim: Claim) => {
@@ -61,13 +66,15 @@ export default function ClaimsPage() {
   };
 
   const handleReject = (claim: Claim) => {
-    Modal.confirm({
-      title: 'Reject claim',
-      content: `Reject this claim?`,
-      okText: 'Reject',
-      okButtonProps: { danger: true },
-      onOk: () => updateClaimStatus(claim.id, { status: 'rejected' }),
-    });
+    setRejectModal({ claim, reason: '' });
+  };
+
+  const handleRejectOk = async () => {
+    if (!rejectModal) return;
+    const { claim, reason } = rejectModal;
+    if (!reason.trim()) return; // mandatory reason for reject
+    await updateClaimStatus(claim.id, { status: 'rejected', reason: reason.trim() });
+    setRejectModal(null);
   };
 
   const handleDisburse = (claim: Claim) => {
@@ -79,17 +86,8 @@ export default function ClaimsPage() {
     });
   };
 
-  const handleCreateSubmit = async (values: CreateClaimRequest) => {
-    await createClaim(values);
-  };
-
   return (
     <>
-      {createError && (
-        <div className="mb-4 rounded border border-red-200 bg-red-50 p-3 text-red-700">
-          Failed to create claim. Please try again.
-        </div>
-      )}
       {error && (
         <div className="mb-4 rounded border border-red-200 bg-red-50 p-3 text-red-700">
           Failed to load claims. Please try again.
@@ -110,12 +108,67 @@ export default function ClaimsPage() {
         onSubmit={handleSubmit}
         onDisburse={handleDisburse}
         onNewClaim={() => setCreateModalOpen(true)}
+        onViewComparison={(c) => setComparisonClaim(c)}
       />
+      <ClaimComparisonModal
+        open={comparisonClaim != null}
+        onClose={() => setComparisonClaim(null)}
+        claim={comparisonClaim}
+      />
+      <Modal
+        title="Approve claim"
+        open={approveModal != null}
+        onCancel={() => setApproveModal(null)}
+        onOk={handleApproveOk}
+        okText="Approve"
+        okButtonProps={{
+          disabled: approveModal != null && needsReasonForApprove(approveModal.claim) && !approveModal.reason.trim(),
+        }}
+        destroyOnClose
+      >
+        <p className="mb-2">
+          Approve claim for ${approveModal?.claim?.amount ?? '—'}?
+          {approveModal && needsReasonForApprove(approveModal.claim) && (
+            <span className="block mt-2 text-amber-600">Reason is required (data differs significantly from AI).</span>
+          )}
+        </p>
+        <div className="mb-0">
+          <label className="block text-sm text-slate-600 mb-1">Reason {approveModal && needsReasonForApprove(approveModal.claim) ? '(required)' : '(optional)'}</label>
+          <Input.TextArea
+            rows={3}
+            value={approveModal?.reason ?? ''}
+            onChange={(e) => setApproveModal((prev) => (prev ? { ...prev, reason: e.target.value } : null))}
+            placeholder={approveModal && needsReasonForApprove(approveModal.claim) ? 'Required for this claim' : 'Optional comment'}
+          />
+        </div>
+      </Modal>
+      <Modal
+        title="Reject claim"
+        open={rejectModal != null}
+        onCancel={() => setRejectModal(null)}
+        onOk={handleRejectOk}
+        okText="Reject"
+        okButtonProps={{
+          danger: true,
+          disabled: rejectModal != null && !rejectModal.reason.trim(),
+        }}
+        destroyOnClose
+      >
+        <p className="mb-2">Reject this claim? A reason is required.</p>
+        <div className="mb-0">
+          <label className="block text-sm text-slate-600 mb-1">Reason (required)</label>
+          <Input.TextArea
+            rows={3}
+            value={rejectModal?.reason ?? ''}
+            onChange={(e) => setRejectModal((prev) => (prev ? { ...prev, reason: e.target.value } : null))}
+            placeholder="Enter rejection reason"
+          />
+        </div>
+      </Modal>
       <CreateClaimModal
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
-        onSubmit={handleCreateSubmit}
-        loading={isCreating}
+        onSuccess={() => mutate()}
       />
     </>
   );

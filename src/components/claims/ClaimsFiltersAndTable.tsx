@@ -1,4 +1,5 @@
-import { Button, Tag } from 'antd';
+import { ExclamationCircleOutlined, WarningOutlined } from '@ant-design/icons';
+import { Button, Tag, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import AppTable from '../../core-utils/components/AppTable';
 import type { AppTablePagination } from '../../core-utils/components/AppTable';
@@ -29,6 +30,8 @@ export interface ClaimsFiltersAndTableProps {
   onDisburse?: (claim: Claim) => void;
   canAct?: boolean;
   canDisburse?: boolean;
+  /** Open comparison (user vs AI) + receipt view */
+  onViewComparison?: (claim: Claim) => void;
 }
 
 export default function ClaimsFiltersAndTable({
@@ -44,8 +47,42 @@ export default function ClaimsFiltersAndTable({
   onDisburse,
   canAct = false,
   canDisburse = false,
+  onViewComparison,
 }: ClaimsFiltersAndTableProps) {
   const columns: ColumnsType<Claim> = [
+    ...(canAct
+      ? [
+          {
+            title: '',
+            key: 'supervision',
+            width: 44,
+            align: 'center' as const,
+            fixed: 'left' as const,
+            render: (_: unknown, r: Claim) => {
+              const s = r.needSupervision;
+              if (s === 'high')
+                return (
+                  <Tooltip title="Needs supervision: submitted data differs significantly from AI">
+                    <ExclamationCircleOutlined
+                      style={{ color: '#dc2626', fontSize: 18 }}
+                      className="align-middle"
+                    />
+                  </Tooltip>
+                );
+              if (s === 'low')
+                return (
+                  <Tooltip title="Minor differences from AI analysis">
+                    <WarningOutlined
+                      style={{ color: '#f59e0b', fontSize: 18 }}
+                      className="align-middle"
+                    />
+                  </Tooltip>
+                );
+              return null;
+            },
+          },
+        ]
+      : []),
     {
       title: 'Description',
       dataIndex: 'description',
@@ -91,22 +128,29 @@ export default function ClaimsFiltersAndTable({
     },
     {
       title: 'Date',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
+      dataIndex: 'expenseDate',
+      key: 'date',
       width: 110,
-      render: (v: string) => (v ? new Date(v).toLocaleDateString() : '—'),
+      render: (_: unknown, r: Claim) =>
+        r.expenseDate
+          ? new Date(r.expenseDate).toLocaleDateString()
+          : r.createdAt
+            ? new Date(r.createdAt).toLocaleDateString()
+            : '—',
     },
   ];
 
+  const hasView = onViewComparison != null;
   const hasActions =
     (canAct && (onApprove || onReject)) ||
     (onSubmit !== undefined) ||
-    (canDisburse && (onDisburse || onReject));
+    (canDisburse && (onDisburse || onReject)) ||
+    hasView;
   if (hasActions) {
     columns.push({
       title: 'Actions',
       key: 'actions',
-      width: 200,
+      width: hasView ? 240 : 200,
       fixed: 'right',
       render: (_, record) => {
         const status = record.status?.toLowerCase();
@@ -114,7 +158,7 @@ export default function ClaimsFiltersAndTable({
           ? record.userId === currentUserId
           : !canAct;
         return (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2 justify-end">
             {status === 'draft' && isOwner && onSubmit && (
               <button
                 type="button"
@@ -160,6 +204,11 @@ export default function ClaimsFiltersAndTable({
                 Reject
               </button>
             )}
+            {onViewComparison && (record.aiAnalysis || record.receiptUrl) && (
+              <Button type="link" size="small" onClick={() => onViewComparison(record)}>
+                View
+              </Button>
+            )}
           </div>
         );
       },
@@ -185,7 +234,7 @@ export default function ClaimsFiltersAndTable({
           ...pagination,
           onChange: onPageChange,
         }}
-        scrollX={920}
+        scrollX={980}
       />
     </div>
   );
