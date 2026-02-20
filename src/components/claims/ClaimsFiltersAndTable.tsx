@@ -1,10 +1,13 @@
 import {
   CheckOutlined,
   CloseOutlined,
+  DeleteOutlined,
   DollarOutlined,
+  EditOutlined,
   ExclamationCircleOutlined,
   EyeOutlined,
   SendOutlined,
+  ToolOutlined,
   WarningOutlined,
 } from '@ant-design/icons';
 import { Button, Space, Tabs, Tag, Tooltip } from 'antd';
@@ -42,6 +45,10 @@ export interface ClaimsFiltersAndTableProps {
   canDisburse?: boolean;
   /** Open comparison (user vs AI) + receipt view */
   onViewComparison?: (claim: Claim) => void;
+  /** Edit draft (owner only) */
+  onEditDraft?: (claim: Claim) => void;
+  /** Delete draft (owner only) */
+  onDeleteDraft?: (claim: Claim) => void;
   /** Active status filter tab (sent as API param) */
   statusTab?: ClaimsStatusTab;
   onStatusTabChange?: (tab: ClaimsStatusTab) => void;
@@ -61,6 +68,8 @@ export default function ClaimsFiltersAndTable({
   canAct = false,
   canDisburse = false,
   onViewComparison,
+  onEditDraft,
+  onDeleteDraft,
   statusTab = '',
   onStatusTabChange,
 }: ClaimsFiltersAndTableProps) {
@@ -74,6 +83,15 @@ export default function ClaimsFiltersAndTable({
             align: 'center' as const,
             fixed: 'left' as const,
             render: (_: unknown, r: Claim) => {
+              if (r.needLegalReview)
+                return (
+                  <Tooltip title="Legal / policy violation (e.g. alcohol detected)">
+                    <ToolOutlined
+                      style={{ color: '#dc2626', fontSize: 18 }}
+                      className="align-middle"
+                    />
+                  </Tooltip>
+                );
               const s = r.needSupervision;
               if (s === 'high')
                 return (
@@ -156,11 +174,13 @@ export default function ClaimsFiltersAndTable({
   ];
 
   const hasView = onViewComparison != null;
+  const hasDraftActions = (onEditDraft != null || onDeleteDraft != null);
   const hasActions =
     (canAct && (onApprove || onReject)) ||
     (onSubmit !== undefined) ||
     (canDisburse && (onDisburse || onReject)) ||
-    hasView;
+    hasView ||
+    hasDraftActions;
   if (hasActions) {
     columns.push({
       title: 'Actions',
@@ -178,6 +198,20 @@ export default function ClaimsFiltersAndTable({
           buttons.push(
             <Tooltip key="submit" title="Submit for approval">
               <Button type="primary" size="small" icon={<SendOutlined />} onClick={() => onSubmit(record)} />
+            </Tooltip>
+          );
+        }
+        if (status === 'draft' && isOwner && onEditDraft) {
+          buttons.push(
+            <Tooltip key="edit" title="Edit draft">
+              <Button size="small" icon={<EditOutlined />} onClick={() => onEditDraft(record)} />
+            </Tooltip>
+          );
+        }
+        if (status === 'draft' && isOwner && onDeleteDraft) {
+          buttons.push(
+            <Tooltip key="delete" title="Delete draft">
+              <Button size="small" danger icon={<DeleteOutlined />} onClick={() => onDeleteDraft(record)} />
             </Tooltip>
           );
         }

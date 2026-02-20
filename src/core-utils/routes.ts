@@ -25,9 +25,9 @@ export const ROUTES: RouteConfig[] = [
   {
     path: '/reports',
     permission: 'xpensepanel:reports:view',
-    label: 'Reports',
+    label: 'SpendLens',
     sidebar: true,
-    title: 'Reports',
+    title: 'SpendLens',
   },
   {
     path: '/admin',

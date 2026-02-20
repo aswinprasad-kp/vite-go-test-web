@@ -1,4 +1,5 @@
 import { Modal, Table, Image, Typography } from 'antd';
+import { ToolOutlined } from '@ant-design/icons';
 import type { Claim } from '../../types/claim';
 import { flagCodeToDisplayLabel } from '../../core-utils/format';
 
@@ -63,6 +64,11 @@ export default function ClaimComparisonModal({
   if (policyDisplay) {
     rows.push({ field: 'Policy flags', user: '—', ai: policyDisplay });
   }
+  const reimbursable = claim.reimbursableAmount;
+  if (reimbursable != null && reimbursable !== '') {
+    const reimbFormatted = formatAmount(reimbursable);
+    rows.push({ field: 'Reimbursable amount', user: reimbFormatted, ai: reimbFormatted });
+  }
 
   return (
     <Modal
@@ -73,6 +79,12 @@ export default function ClaimComparisonModal({
       width={640}
       destroyOnClose
     >
+      {claim.needLegalReview && (
+        <div className="mb-4 flex items-center gap-2 rounded border border-red-200 bg-red-50 p-3 text-red-800">
+          <ToolOutlined style={{ fontSize: 18, color: '#dc2626' }} />
+          <span className="font-medium">Legal / policy violation detected (e.g. alcohol). Review before approving.</span>
+        </div>
+      )}
       <Table
         dataSource={rows}
         rowKey="field"

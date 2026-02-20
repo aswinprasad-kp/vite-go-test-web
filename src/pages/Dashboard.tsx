@@ -19,6 +19,8 @@ interface DashboardProps {
   onDisburse?: (claim: Claim) => void;
   onNewClaim?: () => void;
   onViewComparison?: (claim: Claim) => void;
+  onEditDraft?: (claim: Claim) => void;
+  onDeleteDraft?: (claim: Claim) => void;
   statusTab?: ClaimsStatusTab;
   onStatusTabChange?: (tab: ClaimsStatusTab) => void;
 }
@@ -39,6 +41,8 @@ export default function Dashboard({
   onDisburse,
   onNewClaim,
   onViewComparison,
+  onEditDraft,
+  onDeleteDraft,
   statusTab = '',
   onStatusTabChange,
 }: DashboardProps) {
@@ -57,6 +61,8 @@ export default function Dashboard({
       onDisburse={onDisburse}
       onNewClaim={onNewClaim}
       onViewComparison={onViewComparison}
+      onEditDraft={onEditDraft}
+      onDeleteDraft={onDeleteDraft}
       statusTab={statusTab}
       onStatusTabChange={onStatusTabChange}
     />

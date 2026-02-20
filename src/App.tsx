@@ -9,6 +9,7 @@ import DashboardLayout from './templates/DashboardLayout';
 import RouteProtector from './components/RouteProtector';
 import ClaimsPage from './pages/ClaimsPage';
 import AdminPage from './pages/AdminPage';
+import ReportsPage from './pages/ReportsPage';
 
 function fetcher(url: string) {
   return axiosInstance.get(url).then((res) => res.data);
@@ -61,9 +62,7 @@ export default function App() {
                 path="reports"
                 element={
                   <RouteProtector>
-                    <div className="rounded border border-gray-200 bg-gray-50 p-6 text-gray-600">
-                      Reports (coming soon)
-                    </div>
+                    <ReportsPage />
                   </RouteProtector>
                 }
               />

@@ -3,9 +3,10 @@ import { Input, Modal } from 'antd';
 import { DEFAULT_PAGE_SIZE } from '../core-utils/types/pagination';
 import { useAuth } from '../hooks/useAuth';
 import { useClaims } from '../hooks/useClaims';
-import { useUpdateClaimStatus } from '../hooks/useClaimsMutation';
+import { useDeleteClaim, useUpdateClaimStatus } from '../hooks/useClaimsMutation';
 import { usePermissions } from '../hooks/usePermissions';
 import ClaimComparisonModal from '../components/claims/ClaimComparisonModal';
+import EditDraftModal from '../components/claims/EditDraftModal';
 import CreateClaimModal from '../components/CreateClaimModal';
 import Dashboard from './Dashboard';
 import type { Claim } from '../types/claim';
@@ -23,11 +24,13 @@ export default function ClaimsPage() {
   const { items, total, isLoading, error, mutate } = useClaims(page, pageSize, statusTab);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [comparisonClaim, setComparisonClaim] = useState<Claim | null>(null);
+  const [editDraftClaim, setEditDraftClaim] = useState<Claim | null>(null);
   const [approveModal, setApproveModal] = useState<{ claim: Claim; reason: string } | null>(null);
   const [rejectModal, setRejectModal] = useState<{ claim: Claim; reason: string } | null>(null);
 
   const { permissions } = usePermissions();
   const { updateClaimStatus, isUpdating } = useUpdateClaimStatus(() => mutate());
+  const { deleteClaim } = useDeleteClaim(() => mutate());
 
   const canAct =
     permissions.includes('xpensepanel:claims:approve') ||
@@ -93,6 +96,16 @@ export default function ClaimsPage() {
     });
   };
 
+  const handleDeleteDraft = (claim: Claim) => {
+    Modal.confirm({
+      title: 'Delete draft',
+      content: `Delete this draft claim ($${claim.amount})? This cannot be undone.`,
+      okText: 'Delete',
+      okButtonProps: { danger: true },
+      onOk: () => deleteClaim(claim.id),
+    });
+  };
+
   return (
     <>
       {error && (
@@ -116,8 +129,16 @@ export default function ClaimsPage() {
         onDisburse={handleDisburse}
         onNewClaim={() => setCreateModalOpen(true)}
         onViewComparison={(c) => setComparisonClaim(c)}
+        onEditDraft={(c) => setEditDraftClaim(c)}
+        onDeleteDraft={handleDeleteDraft}
         statusTab={statusTab}
         onStatusTabChange={handleStatusTabChange}
+      />
+      <EditDraftModal
+        open={editDraftClaim != null}
+        onClose={() => setEditDraftClaim(null)}
+        onSuccess={() => { mutate(); setEditDraftClaim(null); }}
+        claim={editDraftClaim}
       />
       <ClaimComparisonModal
         open={comparisonClaim != null}
