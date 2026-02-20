@@ -1,26 +1,33 @@
 import { GoogleLogin, type CredentialResponse } from '@react-oauth/google';
+import { jwtDecode } from 'jwt-decode';
 
-// Define the interface for the data we expect back from OUR Go backend
-interface AuthResponse {
+interface GoogleData {
   email: string;
-  token: string;
+  name: string;
+  picture: string;
+}
+
+interface AuthBackendResponse {
   status: string;
+  email: string;
+  role: string;
+  token: string;
 }
 
 interface LoginProps {
-  onAuthSuccess: (data: AuthResponse) => void;
+  onAuthSuccess: (googleData: GoogleData, backendData: AuthBackendResponse) => void;
 }
 
 export default function Login({ onAuthSuccess }: LoginProps) {
   const handleSuccess = async (credentialResponse: CredentialResponse) => {
-    // credentialResponse.credential is the ID Token from Google
-    if (!credentialResponse.credential) {
-      console.error("No credential returned from Google");
-      return;
-    }
+    if (!credentialResponse.credential) return;
 
     try {
-      const res = await fetch('/api/auth/google', {
+      // 1. Decode Google ID Token for profile info (name, picture)
+      const decoded = jwtDecode<GoogleData>(credentialResponse.credential);
+
+      // 2. Authenticate with OUR backend
+      const res = await fetch(`${import.meta.env.VITE_BE_URL}/api/auth/google`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token: credentialResponse.credential })
@@ -28,8 +35,10 @@ export default function Login({ onAuthSuccess }: LoginProps) {
 
       if (!res.ok) throw new Error("Backend authentication failed");
 
-      const data: AuthResponse = await res.json();
-      onAuthSuccess(data);
+      const backendData = await res.json() as AuthBackendResponse;
+      
+      // 3. Pass both to parent
+      onAuthSuccess(decoded, backendData);
     } catch (err) {
       console.error("Login Error:", err);
     }

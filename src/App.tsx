@@ -2,28 +2,48 @@ import { useEffect, useState } from 'react'
 import Login from './Login' // Assuming Login.tsx is in the same folder
 
 interface Claim {
-  id: number,
-  merchant: string,
+  id: string
   amount: number
+  description: string
+  status: string
+  created_at: string
 }
 
-interface UserProfile {
-  email: string;
-  token: string;
+// Extend UserProfile for internal state to include the token
+interface UserSession {
+  email: string
+  name: string
+  picture: string
+  role: string
+  token: string
+}
+
+interface AuthBackendResponse {
+  status: string
+  email: string
+  role: string
+  token: string
 }
 
 function App() {
   const [claims, setClaims] = useState<Claim[]>([])
   // Initialize state from localStorage
-  const [user, setUser] = useState<UserProfile | null>(() => {
+  const [user, setUser] = useState<UserSession | null>(() => {
     const savedUser = localStorage.getItem('xpense_user')
     return savedUser ? JSON.parse(savedUser) : null
   })
 
   // 1. Persist user session to localStorage
-  const handleAuthSuccess = (userData: UserProfile) => {
-    localStorage.setItem('xpense_user', JSON.stringify(userData))
-    setUser(userData)
+  const handleAuthSuccess = (googleData: { email: string; name: string; picture: string }, backendData: AuthBackendResponse) => {
+    const sessionData: UserSession = {
+      email: googleData.email,
+      name: googleData.name,
+      picture: googleData.picture,
+      role: backendData.role,
+      token: backendData.token,
+    }
+    setUser(sessionData)
+    localStorage.setItem('xpense_user', JSON.stringify(sessionData))
   }
 
   const handleLogout = () => {
@@ -35,7 +55,7 @@ function App() {
   useEffect(() => {
     if (!user) return;
 
-    fetch('/api/claims', {
+    fetch(`${import.meta.env.VITE_BE_URL}/api/claims`, {
       headers: {
         'Authorization': `Bearer ${user.token}`
       }
@@ -61,44 +81,75 @@ function App() {
 
   // 2. Conditional Rendering
   if (!user) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <Login onAuthSuccess={handleAuthSuccess} />
-      </div>
-    )
+    return <Login onAuthSuccess={handleAuthSuccess} />
   }
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1>💸 XpenseOps Dashboard</h1>
-        <button onClick={handleLogout} style={{ height: '30px' }}>Logout</button>
-      </div>
-      <p>Welcome, <strong>{user.email}</strong></p>
-      <hr />
-      
-      {!claims || claims.length === 0 ? (
-        <p>No claims found or loading...</p>
-      ) : (
-        <div style={{ marginTop: '20px' }}>
-          <h3>Recent Claims</h3>
-          <ul style={{ listStyle: 'none', padding: 0 }}>
-            {claims.map((claim: Claim) => (
-              <li key={claim.id} style={{ 
-                padding: '10px', 
-                borderBottom: '1px solid #eee',
-                display: 'flex',
-                justifyContent: 'space-between'
-              }}>
-                <span><strong>{claim.merchant}</strong></span>
-                <span style={{ color: '#2ecc71', fontWeight: 'bold' }}>
-                  ${claim.amount.toFixed(2)}
-                </span>
-              </li>
-            ))}
-          </ul>
+    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px', fontFamily: 'sans-serif' }}>
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <img src={user.picture} alt={user.name} style={{ width: '40px', borderRadius: '50%' }} />
+          <div>
+            <h1 style={{ margin: 0 }}>XpenseOps</h1>
+            <span style={{ 
+              fontSize: '12px', 
+              background: user.role === 'admin' ? '#ef4444' : (user.role === 'manager' ? '#3b82f6' : '#10b981'), 
+              color: 'white', 
+              padding: '2px 8px', 
+              borderRadius: '12px',
+              textTransform: 'uppercase',
+              fontWeight: 'bold'
+            }}>
+              {user.role}
+            </span>
+          </div>
         </div>
-      )}
+        <div style={{ textAlign: 'right' }}>
+          <p style={{ margin: 0 }}>{user.name}</p>
+          <button onClick={handleLogout} style={{ color: '#ef4444', border: 'none', background: 'none', cursor: 'pointer', padding: 0 }}>Logout</button>
+        </div>
+      </header>
+
+      <section>
+        <h2 style={{ marginBottom: '20px' }}>{user.role === 'employee' ? 'My Claims' : 'Team Claims Queue'}</h2>
+        {!claims || claims.length === 0 ? (
+          <p style={{ color: '#666' }}>No claims found. Ready to submit your first expense?</p>
+        ) : (
+          <div style={{ display: 'grid', gap: '10px' }}>
+            {claims.map(claim => (
+              <div key={claim.id} style={{ 
+                border: '1px solid #eee', 
+                padding: '15px', 
+                borderRadius: '8px', 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
+                backgroundColor: 'white',
+                boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+              }}>
+                <div>
+                  <h3 style={{ margin: '0 0 5px 0' }}>{claim.description || "No description"}</h3>
+                  <p style={{ margin: 0, fontSize: '14px', color: '#666' }}>
+                    {new Date(claim.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <p style={{ margin: 0, fontWeight: 'bold', fontSize: '18px' }}>
+                    ${Number(claim.amount).toFixed(2)}
+                  </p>
+                  <span style={{ 
+                    fontSize: '12px', 
+                    color: claim.status === 'pending' ? '#f59e0b' : (claim.status === 'approved' ? '#10b981' : '#ef4444'),
+                    fontWeight: '600'
+                  }}>
+                    ● {claim.status.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   )
 }
