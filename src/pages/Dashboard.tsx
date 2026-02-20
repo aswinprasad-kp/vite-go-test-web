@@ -16,6 +16,7 @@ interface DashboardProps {
   onSubmit?: (claim: Claim) => void;
   onDisburse?: (claim: Claim) => void;
   onNewClaim?: () => void;
+  onViewComparison?: (claim: Claim) => void;
 }
 
 export default function Dashboard({
@@ -33,6 +34,7 @@ export default function Dashboard({
   onSubmit,
   onDisburse,
   onNewClaim,
+  onViewComparison,
 }: DashboardProps) {
   return (
     <ClaimsFiltersAndTable
@@ -48,6 +50,7 @@ export default function Dashboard({
       onSubmit={onSubmit}
       onDisburse={onDisburse}
       onNewClaim={onNewClaim}
+      onViewComparison={onViewComparison}
     />
   );
 }

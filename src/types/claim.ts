@@ -9,7 +9,21 @@ export interface Claim {
   status: string;
   receiptUrl: string;
   confidenceScore?: number;
+  expenseDate?: string;
+  statusReason?: string;
+  needSupervision?: 'none' | 'low' | 'high';
+  aiAnalysis?: Record<string, unknown>;
   createdAt: string;
+}
+
+/** Request body for PATCH /api/claims/:id (draft fields + optional submit). */
+export interface UpdateClaimDraftRequest {
+  amount?: string;
+  merchant?: string;
+  category?: string;
+  description?: string;
+  expenseDate?: string;
+  status?: string;
 }
 
 /** Request body for creating a claim (lowerCamelCase). */
@@ -19,9 +33,11 @@ export interface CreateClaimRequest {
   category: string;
   description: string;
   receiptUrl?: string;
+  expenseDate?: string;
 }
 
 /** Request body for updating claim status. */
 export interface UpdateClaimStatusRequest {
   status: string;
+  reason?: string;
 }
