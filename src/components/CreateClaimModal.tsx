@@ -10,6 +10,12 @@ import {
 import { useUploadReceiptForClaim } from '../hooks/useReceiptUpload';
 import type { CreateClaimRequest } from '../types/claim';
 
+/** Form values: expenseDate is Dayjs from DatePicker; API expects string. */
+type CreateClaimFormValues = Omit<CreateClaimRequest, 'expenseDate'> & {
+  amountNum?: number;
+  expenseDate?: Dayjs;
+};
+
 interface CreateClaimModalProps {
   open: boolean;
   onClose: () => void;
@@ -42,7 +48,7 @@ export default function CreateClaimModal({
   onClose,
   onSuccess,
 }: CreateClaimModalProps) {
-  const [form] = Form.useForm<CreateClaimRequest & { amountNum?: number }>();
+  const [form] = Form.useForm<CreateClaimFormValues>();
   const [receiptFile, setReceiptFile] = useState<File | undefined>();
   const [draftId, setDraftId] = useState<string | null>(null);
   const [step, setStep] = useState<'form' | 'uploading' | 'prefilled'>('form');
