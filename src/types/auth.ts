@@ -1,6 +1,8 @@
 /** Session stored in localStorage and used in app (lowerCamelCase). */
 export interface UserSession {
   email: string;
+  /** Supabase auth user ID (UUID string); for owner checks e.g. claim.userId === uid */
+  uid?: string;
   name: string;
   /** Preferred display name (from profile); falls back to name. */
   displayName?: string;
@@ -15,6 +17,7 @@ export interface UserSession {
 export interface AuthBackendResponse {
   status: string;
   email: string;
+  uid?: string;
   role: string;
   token: string;
   displayName?: string;
