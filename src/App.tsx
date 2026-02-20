@@ -47,7 +47,15 @@ function App() {
         }
         return res.json();
       })
-      .then(data => setClaims(data))
+      .then(data => {
+        // Safe check: Backend might return a JSON error object instead of an array
+        if (Array.isArray(data)) {
+          setClaims(data)
+        } else {
+          console.error("Backend returned non-array data:", data)
+          setClaims([])
+        }
+      })
       .catch(err => console.error("Failed to fetch backend:", err))
   }, [user])
 
