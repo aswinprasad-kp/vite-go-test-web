@@ -1,9 +1,19 @@
-import { ExclamationCircleOutlined, WarningOutlined } from '@ant-design/icons';
-import { Button, Tag, Tooltip } from 'antd';
+import {
+  CheckOutlined,
+  CloseOutlined,
+  DollarOutlined,
+  ExclamationCircleOutlined,
+  EyeOutlined,
+  SendOutlined,
+  WarningOutlined,
+} from '@ant-design/icons';
+import { Button, Space, Tabs, Tag, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import AppTable from '../../core-utils/components/AppTable';
 import type { AppTablePagination } from '../../core-utils/components/AppTable';
 import type { Claim } from '../../types/claim';
+
+export type ClaimsStatusTab = '' | 'all' | 'draft' | 'pending' | 'approved' | 'rejected' | 'disbursed';
 
 const statusColor: Record<string, string> = {
   draft: 'default',
@@ -32,6 +42,9 @@ export interface ClaimsFiltersAndTableProps {
   canDisburse?: boolean;
   /** Open comparison (user vs AI) + receipt view */
   onViewComparison?: (claim: Claim) => void;
+  /** Active status filter tab (sent as API param) */
+  statusTab?: ClaimsStatusTab;
+  onStatusTabChange?: (tab: ClaimsStatusTab) => void;
 }
 
 export default function ClaimsFiltersAndTable({
@@ -48,6 +61,8 @@ export default function ClaimsFiltersAndTable({
   canAct = false,
   canDisburse = false,
   onViewComparison,
+  statusTab = '',
+  onStatusTabChange,
 }: ClaimsFiltersAndTableProps) {
   const columns: ColumnsType<Claim> = [
     ...(canAct
@@ -150,75 +165,89 @@ export default function ClaimsFiltersAndTable({
     columns.push({
       title: 'Actions',
       key: 'actions',
-      width: hasView ? 240 : 200,
+      width: hasView ? 140 : 100,
       fixed: 'right',
+      align: 'right',
       render: (_, record) => {
         const status = record.status?.toLowerCase();
         const isOwner = currentUserId
           ? record.userId === currentUserId
           : !canAct;
+        const buttons: React.ReactNode[] = [];
+        if (status === 'draft' && isOwner && onSubmit) {
+          buttons.push(
+            <Tooltip key="submit" title="Submit for approval">
+              <Button type="primary" size="small" icon={<SendOutlined />} onClick={() => onSubmit(record)} />
+            </Tooltip>
+          );
+        }
+        if (status === 'pending' && canAct && onApprove) {
+          buttons.push(
+            <Tooltip key="approve" title="Approve">
+              <Button type="primary" size="small" icon={<CheckOutlined />} onClick={() => onApprove(record)} />
+            </Tooltip>
+          );
+        }
+        if (status === 'pending' && canAct && onReject) {
+          buttons.push(
+            <Tooltip key="reject-pending" title="Reject">
+              <Button danger size="small" icon={<CloseOutlined />} onClick={() => onReject(record)} />
+            </Tooltip>
+          );
+        }
+        if (status === 'approved' && canDisburse && onDisburse) {
+          buttons.push(
+            <Tooltip key="disburse" title="Mark disbursed">
+              <Button type="primary" size="small" icon={<DollarOutlined />} onClick={() => onDisburse(record)} />
+            </Tooltip>
+          );
+        }
+        if (status === 'approved' && canDisburse && onReject) {
+          buttons.push(
+            <Tooltip key="reject-approved" title="Reject">
+              <Button danger size="small" icon={<CloseOutlined />} onClick={() => onReject(record)} />
+            </Tooltip>
+          );
+        }
+        if (onViewComparison && (record.aiAnalysis || record.receiptUrl)) {
+          buttons.push(
+            <Tooltip key="view" title="View details & receipt">
+              <Button size="small" icon={<EyeOutlined />} onClick={() => onViewComparison(record)} />
+            </Tooltip>
+          );
+        }
         return (
-          <div className="flex flex-wrap items-center gap-2 justify-end">
-            {status === 'draft' && isOwner && onSubmit && (
-              <button
-                type="button"
-                onClick={() => onSubmit(record)}
-                className="text-primary hover:underline"
-              >
-                Submit
-              </button>
-            )}
-            {status === 'pending' && canAct && onApprove && (
-              <button
-                type="button"
-                onClick={() => onApprove(record)}
-                className="text-primary hover:underline"
-              >
-                Approve
-              </button>
-            )}
-            {status === 'pending' && canAct && onReject && (
-              <button
-                type="button"
-                onClick={() => onReject(record)}
-                className="text-red-600 hover:underline"
-              >
-                Reject
-              </button>
-            )}
-            {status === 'approved' && canDisburse && onDisburse && (
-              <button
-                type="button"
-                onClick={() => onDisburse(record)}
-                className="text-primary hover:underline"
-              >
-                Disburse
-              </button>
-            )}
-            {status === 'approved' && canDisburse && onReject && (
-              <button
-                type="button"
-                onClick={() => onReject(record)}
-                className="text-red-600 hover:underline"
-              >
-                Reject
-              </button>
-            )}
-            {onViewComparison && (record.aiAnalysis || record.receiptUrl) && (
-              <Button type="link" size="small" onClick={() => onViewComparison(record)}>
-                View
-              </Button>
-            )}
-          </div>
+          <Space size="small" wrap={false} className="flex justify-end">
+            {buttons}
+          </Space>
         );
       },
     });
   }
 
+  const statusTabs: { key: ClaimsStatusTab; label: string }[] = [
+    { key: '', label: 'All' },
+    { key: 'draft', label: 'Draft' },
+    { key: 'pending', label: 'Pending' },
+    { key: 'approved', label: 'Approved' },
+    { key: 'rejected', label: 'Rejected' },
+    { key: 'disbursed', label: 'Disbursed' },
+  ];
+
   return (
     <div className="w-full">
-      <div className="mb-6 flex items-center justify-between border-b border-slate-100 pb-4">
-        <p className="text-sm text-slate-500">Expense claims and approvals</p>
+      <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-4">
+        <div className="flex flex-col gap-2">
+          <p className="text-sm text-slate-500">Expense claims and approvals</p>
+          {onStatusTabChange && (
+            <Tabs
+              activeKey={statusTab === 'all' ? '' : statusTab}
+              onChange={(k) => onStatusTabChange((k || '') as ClaimsStatusTab)}
+              size="small"
+              items={statusTabs.map((t) => ({ key: t.key, label: t.label }))}
+            />
+          )}
+        </div>
         {onNewClaim && (
           <Button type="primary" onClick={onNewClaim} className="shadow-sm">
             New claim

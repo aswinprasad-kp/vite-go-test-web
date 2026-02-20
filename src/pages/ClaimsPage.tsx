@@ -9,6 +9,7 @@ import ClaimComparisonModal from '../components/claims/ClaimComparisonModal';
 import CreateClaimModal from '../components/CreateClaimModal';
 import Dashboard from './Dashboard';
 import type { Claim } from '../types/claim';
+import type { ClaimsStatusTab } from './Dashboard';
 
 /**
  * Claims page container: owns hooks, handlers, and composes Dashboard + CreateClaimModal.
@@ -18,7 +19,8 @@ export default function ClaimsPage() {
   const { user } = useAuth();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
-  const { items, total, isLoading, error, mutate } = useClaims(page, pageSize);
+  const [statusTab, setStatusTab] = useState<ClaimsStatusTab>('');
+  const { items, total, isLoading, error, mutate } = useClaims(page, pageSize, statusTab);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [comparisonClaim, setComparisonClaim] = useState<Claim | null>(null);
   const [approveModal, setApproveModal] = useState<{ claim: Claim; reason: string } | null>(null);
@@ -38,6 +40,11 @@ export default function ClaimsPage() {
   const handlePageChange = (p: number, ps: number) => {
     setPage(p);
     setPageSize(ps);
+  };
+
+  const handleStatusTabChange = (tab: ClaimsStatusTab) => {
+    setStatusTab(tab);
+    setPage(1);
   };
 
   const needsReasonForApprove = (c: Claim) => c.needSupervision === 'high';
@@ -109,6 +116,8 @@ export default function ClaimsPage() {
         onDisburse={handleDisburse}
         onNewClaim={() => setCreateModalOpen(true)}
         onViewComparison={(c) => setComparisonClaim(c)}
+        statusTab={statusTab}
+        onStatusTabChange={handleStatusTabChange}
       />
       <ClaimComparisonModal
         open={comparisonClaim != null}

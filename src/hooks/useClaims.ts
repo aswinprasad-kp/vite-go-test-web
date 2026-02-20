@@ -5,8 +5,11 @@ import type { Claim } from '../types/claim';
 
 const CLAIMS_BASE = '/api/claims';
 
-function claimsKey(page: number, pageSize: number) {
-  return `${CLAIMS_BASE}?page=${page}&pageSize=${pageSize}`;
+/** status: '' | 'all' | 'draft' | 'pending' | 'approved' | 'rejected' | 'disbursed' */
+function claimsKey(page: number, pageSize: number, status: string) {
+  const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+  if (status && status !== 'all') params.set('status', status);
+  return `${CLAIMS_BASE}?${params.toString()}`;
 }
 
 async function fetcher(url: string): Promise<PaginatedResponse<Claim>> {
@@ -21,9 +24,9 @@ async function fetcher(url: string): Promise<PaginatedResponse<Claim>> {
   );
 }
 
-/** SWR hook for listing claims with backend pagination (uses proxy; requires auth). */
-export function useClaims(page: number, pageSize: number) {
-  const key = claimsKey(page, pageSize);
+/** SWR hook for listing claims with backend pagination and optional status filter. */
+export function useClaims(page: number, pageSize: number, status: string = '') {
+  const key = claimsKey(page, pageSize, status);
   const { data, error, isLoading, mutate } = useSWR<PaginatedResponse<Claim>>(key, fetcher, {
     revalidateOnFocus: false,
     revalidateIfStale: false,

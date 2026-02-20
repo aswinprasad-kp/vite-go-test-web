@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { EditOutlined, SafetyOutlined, TeamOutlined } from '@ant-design/icons';
 import { Button, Checkbox, Modal, Space, Table, Tabs, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
@@ -152,12 +153,13 @@ function RolesTab({
       title: 'Actions',
       key: 'actions',
       width: 200,
+      align: 'right',
       render: (_, record) => (
-        <Space>
-          <Button type="link" size="small" onClick={() => onEditRole(record)}>
+        <Space size="small">
+          <Button type="primary" ghost size="small" icon={<EditOutlined />} onClick={() => onEditRole(record)}>
             Edit
           </Button>
-          <Button type="link" size="small" onClick={() => onEditPermissions(record)}>
+          <Button type="default" size="small" icon={<SafetyOutlined />} onClick={() => onEditPermissions(record)}>
             Permissions
           </Button>
         </Space>
@@ -213,9 +215,10 @@ function UsersTab({
     {
       title: 'Actions',
       key: 'actions',
-      width: 120,
+      width: 140,
+      align: 'right',
       render: (_, record) => (
-        <Button type="link" size="small" onClick={() => onEditUserRoles(record)}>
+        <Button type="primary" ghost size="small" icon={<TeamOutlined />} onClick={() => onEditUserRoles(record)}>
           Edit roles
         </Button>
       ),
