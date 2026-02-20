@@ -106,3 +106,4 @@ map $http_upgrade $connection_upgrade {
 Then run `nginx -t && nginx -s reload` (or `brew services restart nginx`). Ensure Vite is running with HTTPS on 5173 (`npm run dev` or `npm run dev:stage` with certs in `.env.local` / `.env.stage`).
 
 If WebSocket still fails, use **https://local.work-os.app:5173/** so the browser talks to Vite directly (no Nginx in front).
+

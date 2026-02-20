@@ -27,7 +27,6 @@ axiosInstance.interceptors.response.use(
   (err) => {
     if (err.response?.status === 401) {
       localStorage.removeItem(STORAGE_KEY);
-      // Let the app handle redirect (e.g. by checking session in App)
     }
     return Promise.reject(err);
   }
