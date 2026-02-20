@@ -29,8 +29,12 @@ export default function ClaimsPage() {
     mutate();
   });
 
-  const canAct = permissions.includes('xpensepanel:claims:approve');
-  const canDisburse = permissions.includes('xpensepanel:claims:disburse');
+  const canAct =
+    permissions.includes('xpensepanel:claims:approve') ||
+    permissions.includes('xpense:claims:approve');
+  const canDisburse =
+    permissions.includes('xpensepanel:claims:disburse') ||
+    permissions.includes('xpense:claims:disburse');
   const currentUserId = user?.uid;
 
   const handlePageChange = (p: number, ps: number) => {

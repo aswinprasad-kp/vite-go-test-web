@@ -1,6 +1,6 @@
 import { ConfigProvider } from 'antd';
 import { SWRConfig } from 'swr';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { axiosInstance } from './core-utils/axiosInstance';
 import { themeTokens } from './core-utils/theme';
 import { useAuth } from './hooks/useAuth';
@@ -14,29 +14,32 @@ function fetcher(url: string) {
   return axiosInstance.get(url).then((res) => res.data);
 }
 
-function AuthenticatedLayout() {
-  const { user, logout } = useAuth();
-  if (!user) return null;
-  return <DashboardLayout user={user} onLogout={logout} />;
+/** Handles auth gate: when !user show Login at / and redirect elsewhere to /; when user show layout. Logout navigates to / then clears session. */
+function RootGate() {
+  const { user, setSession, logout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const handleLogout = () => {
+    navigate('/', { replace: true });
+    logout();
+  };
+
+  if (!user) {
+    if (location.pathname !== '/') return <Navigate to="/" replace />;
+    return <Login onAuthSuccess={setSession} />;
+  }
+
+  return <DashboardLayout user={user} onLogout={handleLogout} />;
 }
 
 export default function App() {
-  const { user, setSession } = useAuth();
-
-  if (!user) {
-    return (
-      <ConfigProvider theme={{ token: themeTokens }}>
-        <Login onAuthSuccess={setSession} />
-      </ConfigProvider>
-    );
-  }
-
   return (
     <ConfigProvider theme={{ token: themeTokens }}>
       <SWRConfig value={{ fetcher }}>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<AuthenticatedLayout />}>
+            <Route path="/" element={<RootGate />}>
               <Route index element={<Navigate to="/claims" replace />} />
               <Route
                 path="claims"
@@ -65,7 +68,7 @@ export default function App() {
                 }
               />
             </Route>
-            <Route path="*" element={<Navigate to="/claims" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
       </SWRConfig>

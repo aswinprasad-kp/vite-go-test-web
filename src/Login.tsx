@@ -31,9 +31,15 @@ export default function Login({ onAuthSuccess }: LoginProps) {
   };
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-[var(--xpense-bg)]">
-      <div className="w-full max-w-md rounded-lg border p-10 text-center shadow-sm [background:var(--xpense-bg-card)] [border-color:var(--xpense-border)]">
-        <h2 className="mb-6 text-xl font-semibold [color:var(--xpense-text)]">Sign in to XpenseOps</h2>
+    <div className="flex min-h-screen w-full items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50/50 to-indigo-100/40">
+      <div className="relative w-full max-w-md rounded-2xl border border-slate-200/80 bg-white/95 p-10 text-center shadow-xl shadow-slate-300/30 backdrop-blur-sm">
+        <div className="mb-6 flex justify-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--xpense-primary)] to-indigo-600 text-2xl font-bold text-white shadow-lg">
+            X
+          </div>
+        </div>
+        <h1 className="mb-1 text-2xl font-bold tracking-tight text-slate-800">XpenseOps</h1>
+        <p className="mb-8 text-sm text-slate-500">Sign in to manage expenses and claims</p>
         <div className="flex justify-center">
           <GoogleLogin
             onSuccess={handleSuccess}

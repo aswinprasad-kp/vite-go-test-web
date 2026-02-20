@@ -100,7 +100,7 @@ export default function ClaimsFiltersAndTable({
 
   const hasActions =
     (canAct && (onApprove || onReject)) ||
-    (onSubmit && currentUserId) ||
+    (onSubmit !== undefined) ||
     (canDisburse && (onDisburse || onReject));
   if (hasActions) {
     columns.push({
@@ -110,7 +110,9 @@ export default function ClaimsFiltersAndTable({
       fixed: 'right',
       render: (_, record) => {
         const status = record.status?.toLowerCase();
-        const isOwner = currentUserId && record.userId === currentUserId;
+        const isOwner = currentUserId
+          ? record.userId === currentUserId
+          : !canAct;
         return (
           <div className="flex flex-wrap gap-2">
             {status === 'draft' && isOwner && onSubmit && (
@@ -166,9 +168,10 @@ export default function ClaimsFiltersAndTable({
 
   return (
     <div className="w-full">
-      <div className="mb-4 flex justify-end">
+      <div className="mb-6 flex items-center justify-between border-b border-slate-100 pb-4">
+        <p className="text-sm text-slate-500">Expense claims and approvals</p>
         {onNewClaim && (
-          <Button type="primary" onClick={onNewClaim}>
+          <Button type="primary" onClick={onNewClaim} className="shadow-sm">
             New claim
           </Button>
         )}
