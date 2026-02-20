@@ -18,10 +18,17 @@ export interface ClaimsFiltersAndTableProps {
   loading?: boolean;
   pagination: AppTablePagination;
   onPageChange?: (page: number, pageSize: number) => void;
+  /** Current user ID (Supabase uid) for owner checks e.g. Submit draft */
+  currentUserId?: string;
   onApprove?: (claim: Claim) => void;
   onReject?: (claim: Claim) => void;
   onNewClaim?: () => void;
+  /** Submit draft -> pending (owner only) */
+  onSubmit?: (claim: Claim) => void;
+  /** Disburse or reject approved claim (finance) */
+  onDisburse?: (claim: Claim) => void;
   canAct?: boolean;
+  canDisburse?: boolean;
 }
 
 export default function ClaimsFiltersAndTable({
@@ -29,10 +36,14 @@ export default function ClaimsFiltersAndTable({
   loading,
   pagination,
   onPageChange,
+  currentUserId,
   onApprove,
   onReject,
   onNewClaim,
+  onSubmit,
+  onDisburse,
   canAct = false,
+  canDisburse = false,
 }: ClaimsFiltersAndTableProps) {
   const columns: ColumnsType<Claim> = [
     {
@@ -87,34 +98,69 @@ export default function ClaimsFiltersAndTable({
     },
   ];
 
-  if (canAct && (onApprove || onReject)) {
+  const hasActions =
+    (canAct && (onApprove || onReject)) ||
+    (onSubmit && currentUserId) ||
+    (canDisburse && (onDisburse || onReject));
+  if (hasActions) {
     columns.push({
       title: 'Actions',
       key: 'actions',
-      width: 140,
+      width: 200,
       fixed: 'right',
-      render: (_, record) => (
-        <div className="flex gap-2">
-          {record.status?.toLowerCase() === 'pending' && onApprove && (
-            <button
-              type="button"
-              onClick={() => onApprove(record)}
-              className="text-primary hover:underline"
-            >
-              Approve
-            </button>
-          )}
-          {record.status?.toLowerCase() === 'pending' && onReject && (
-            <button
-              type="button"
-              onClick={() => onReject(record)}
-              className="text-red-600 hover:underline"
-            >
-              Reject
-            </button>
-          )}
-        </div>
-      ),
+      render: (_, record) => {
+        const status = record.status?.toLowerCase();
+        const isOwner = currentUserId && record.userId === currentUserId;
+        return (
+          <div className="flex flex-wrap gap-2">
+            {status === 'draft' && isOwner && onSubmit && (
+              <button
+                type="button"
+                onClick={() => onSubmit(record)}
+                className="text-primary hover:underline"
+              >
+                Submit
+              </button>
+            )}
+            {status === 'pending' && canAct && onApprove && (
+              <button
+                type="button"
+                onClick={() => onApprove(record)}
+                className="text-primary hover:underline"
+              >
+                Approve
+              </button>
+            )}
+            {status === 'pending' && canAct && onReject && (
+              <button
+                type="button"
+                onClick={() => onReject(record)}
+                className="text-red-600 hover:underline"
+              >
+                Reject
+              </button>
+            )}
+            {status === 'approved' && canDisburse && onDisburse && (
+              <button
+                type="button"
+                onClick={() => onDisburse(record)}
+                className="text-primary hover:underline"
+              >
+                Disburse
+              </button>
+            )}
+            {status === 'approved' && canDisburse && onReject && (
+              <button
+                type="button"
+                onClick={() => onReject(record)}
+                className="text-red-600 hover:underline"
+              >
+                Reject
+              </button>
+            )}
+          </div>
+        );
+      },
     });
   }
 

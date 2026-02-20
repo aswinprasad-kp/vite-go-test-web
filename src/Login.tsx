@@ -18,6 +18,7 @@ export default function Login({ onAuthSuccess }: LoginProps) {
       if (!data.token) throw new Error('No token in response');
       onAuthSuccess({
         email: decoded.email ?? data.email,
+        uid: data.uid,
         name: decoded.name ?? '',
         displayName: data.displayName ?? decoded.name ?? '',
         picture: data.avatarUrl ?? decoded.picture ?? '',
