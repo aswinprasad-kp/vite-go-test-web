@@ -2,53 +2,34 @@ import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import fs from 'fs'
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode, command }) => {
   const env = loadEnv(mode, process.cwd(), '');
-  const isDev = mode === 'development'; // Check if we are local
+  const isServe = command === 'serve'; // dev server (dev or dev:stage)
+  const isDev = mode === 'development';
   const BACKEND_URL = env.VITE_BE_URL || 'http://127.0.0.1:8080';
-  const certPath = String(env.VITE_SSL_CERT_PATH);
-  const keyPath = String(env.VITE_SSL_KEY_PATH);
+  const certPath = env.VITE_SSL_CERT_PATH?.trim() || '';
+  const keyPath = env.VITE_SSL_KEY_PATH?.trim() || '';
+  const certsExist = certPath && keyPath && certPath !== 'undefined' && keyPath !== 'undefined';
 
-  // return {
-  //   plugins: [react()],
-  //   server: {
-  //     host: 'local.work-os.app',
-  //     // Only attempt to load certs if we are in local dev mode
-  //     ...(isDev && {
-  //       https: {
-  //         key: fs.readFileSync(keyPath),
-  //         cert: fs.readFileSync(certPath),
-  //       },
-  //     }),
-  //     proxy: {
-  //       '^/(api|auth|db|v1)/.*': {
-  //         target: BACKEND_URL,
-  //         changeOrigin: true,
-  //         secure: false,
-  //       },
-  //     },
-  //   },
-  // }
-
+  // HTTPS when cert paths are set: dev uses .env.local, dev:stage uses .env.stage (add VITE_SSL_CERT_PATH / VITE_SSL_KEY_PATH there to match Nginx proxy_pass https://127.0.0.1:5173)
+  const hasHttps = (isDev || mode === 'stage') && certsExist;
+  // Always 0.0.0.0 when serving so localhost + local.work-os.app:5173 + network all work. Only BE URL differs (dev vs dev:stage).
+  const devHost = isServe ? '0.0.0.0' : 'localhost';
   return {
     plugins: [react()],
     server: {
-      host: 'local.work-os.app',
+      host: devHost,
       port: 5173,
-      // StrictPort ensures Vite doesn't accidentally hop to 5174 if 5173 is busy,
-      // which would break the Nginx link.
-      strictPort: true, 
-      ...(isDev && {
+      strictPort: true,
+      ...(hasHttps && {
         https: {
           key: fs.readFileSync(keyPath),
           cert: fs.readFileSync(certPath),
         },
       }),
-      hmr: {
-        // This tells React's "Live Reload" to go through Nginx (port 443)
-        // instead of trying to hit Vite directly on 5173.
-        clientPort: 443, 
-      },
+      ...(hasHttps && {
+        hmr: { clientPort: 443 },
+      }),
       proxy: {
         '^/(api|auth|db|v1)/.*': {
           target: BACKEND_URL,

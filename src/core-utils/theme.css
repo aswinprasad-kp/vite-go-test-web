@@ -1,0 +1,39 @@
+/**
+ * App theme – CSS variables. Change these to switch the entire app theme.
+ * Use in Tailwind with var(--xpense-*) and in AntD ConfigProvider token.
+ */
+:root {
+  /* Primary (actions, links, active states) */
+  --xpense-primary: #2563eb;
+  --xpense-primary-hover: #1d4ed8;
+  --xpense-primary-active: #1e40af;
+
+  /* Surfaces */
+  --xpense-bg: #f8fafc;
+  --xpense-bg-card: #ffffff;
+  --xpense-sidebar-bg: #ffffff;
+  --xpense-header-bg: #ffffff;
+
+  /* Borders & dividers */
+  --xpense-border: #e2e8f0;
+  --xpense-border-light: #f1f5f9;
+
+  /* Text */
+  --xpense-text: #0f172a;
+  --xpense-text-secondary: #475569;
+  --xpense-text-muted: #64748b;
+
+  /* Buttons */
+  --xpense-btn-primary-bg: var(--xpense-primary);
+  --xpense-btn-primary-text: #ffffff;
+  --xpense-btn-secondary-bg: var(--xpense-bg-card);
+  --xpense-btn-secondary-border: var(--xpense-border);
+  --xpense-btn-secondary-text: var(--xpense-text-secondary);
+  --xpense-btn-secondary-hover-bg: #f1f5f9;
+
+  /* Role / status accents (optional overrides) */
+  --xpense-success: #16a34a;
+  --xpense-warning: #ca8a04;
+  --xpense-error: #dc2626;
+  --xpense-info: var(--xpense-primary);
+}
