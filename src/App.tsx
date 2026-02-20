@@ -1,121 +1,73 @@
-import { useState } from 'react';
-import { ConfigProvider, Modal } from 'antd';
+import { ConfigProvider } from 'antd';
 import { SWRConfig } from 'swr';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { axiosInstance } from './core-utils/axiosInstance';
 import { themeTokens } from './core-utils/theme';
-import { DEFAULT_PAGE_SIZE } from './core-utils/types/pagination';
 import { useAuth } from './hooks/useAuth';
-import { useClaims } from './hooks/useClaims';
-import { useCreateClaim, useUpdateClaimStatus } from './hooks/useClaimsMutation';
 import Login from './Login';
-import CreateClaimModal from './components/CreateClaimModal';
 import DashboardLayout from './templates/DashboardLayout';
-import Dashboard from './pages/Dashboard';
-import type { Claim } from './types/claim';
-import type { CreateClaimRequest } from './types/claim';
+import RouteProtector from './components/RouteProtector';
+import ClaimsPage from './pages/ClaimsPage';
+import AdminPage from './pages/AdminPage';
 
 function fetcher(url: string) {
   return axiosInstance.get(url).then((res) => res.data);
 }
 
-interface AuthenticatedAppProps {
-  onLogout: () => void;
-}
-
-function AuthenticatedApp({ onLogout }: AuthenticatedAppProps) {
-  const { user } = useAuth();
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
-  const { items, total, isLoading, error, mutate } = useClaims(page, pageSize);
-  const [createModalOpen, setCreateModalOpen] = useState(false);
-
-  const handlePageChange = (p: number, ps: number) => {
-    setPage(p);
-    setPageSize(ps);
-  };
-
-  const { createClaim, isCreating, createError } = useCreateClaim(() => {
-    mutate();
-  });
-  const { updateClaimStatus, isUpdating } = useUpdateClaimStatus(() => {
-    mutate();
-  });
-
-  const canAct =
-    user?.role === 'manager' ||
-    user?.role === 'admin' ||
-    user?.role === 'finance_admin';
-
-  const handleApprove = (claim: Claim) => {
-    Modal.confirm({
-      title: 'Approve claim',
-      content: `Approve claim for $${claim.amount}?`,
-      okText: 'Approve',
-      onOk: () => updateClaimStatus(claim.id, { status: 'approved' }),
-    });
-  };
-
-  const handleReject = (claim: Claim) => {
-    Modal.confirm({
-      title: 'Reject claim',
-      content: `Reject this claim?`,
-      okText: 'Reject',
-      okButtonProps: { danger: true },
-      onOk: () => updateClaimStatus(claim.id, { status: 'rejected' }),
-    });
-  };
-
-  const handleCreateSubmit = async (values: CreateClaimRequest) => {
-    await createClaim(values);
-  };
-
+function AuthenticatedLayout() {
+  const { user, logout } = useAuth();
   if (!user) return null;
-
-  return (
-    <DashboardLayout user={user} onLogout={onLogout} title="Claims">
-      {createError && (
-        <div className="mb-4 rounded border border-red-200 bg-red-50 p-3 text-red-700">
-          Failed to create claim. Please try again.
-        </div>
-      )}
-      {error && (
-        <div className="mb-4 rounded border border-red-200 bg-red-50 p-3 text-red-700">
-          Failed to load claims. Please try again.
-        </div>
-      )}
-      <Dashboard
-        items={items}
-        total={total}
-        page={page}
-        pageSize={pageSize}
-        onPageChange={handlePageChange}
-        loading={isLoading || isUpdating}
-        canAct={canAct}
-        onApprove={handleApprove}
-        onReject={handleReject}
-        onNewClaim={() => setCreateModalOpen(true)}
-      />
-      <CreateClaimModal
-        open={createModalOpen}
-        onClose={() => setCreateModalOpen(false)}
-        onSubmit={handleCreateSubmit}
-        loading={isCreating}
-      />
-    </DashboardLayout>
-  );
+  return <DashboardLayout user={user} onLogout={logout} />;
 }
 
 export default function App() {
-  const { user, setSession, logout } = useAuth();
+  const { user, setSession } = useAuth();
 
   if (!user) {
-    return <Login onAuthSuccess={setSession} />;
+    return (
+      <ConfigProvider theme={{ token: themeTokens }}>
+        <Login onAuthSuccess={setSession} />
+      </ConfigProvider>
+    );
   }
 
   return (
     <ConfigProvider theme={{ token: themeTokens }}>
       <SWRConfig value={{ fetcher }}>
-        <AuthenticatedApp onLogout={logout} />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<AuthenticatedLayout />}>
+              <Route index element={<Navigate to="/claims" replace />} />
+              <Route
+                path="claims"
+                element={
+                  <RouteProtector>
+                    <ClaimsPage />
+                  </RouteProtector>
+                }
+              />
+              <Route
+                path="admin"
+                element={
+                  <RouteProtector>
+                    <AdminPage />
+                  </RouteProtector>
+                }
+              />
+              <Route
+                path="reports"
+                element={
+                  <RouteProtector>
+                    <div className="rounded border border-gray-200 bg-gray-50 p-6 text-gray-600">
+                      Reports (coming soon)
+                    </div>
+                  </RouteProtector>
+                }
+              />
+            </Route>
+            <Route path="*" element={<Navigate to="/claims" replace />} />
+          </Routes>
+        </BrowserRouter>
       </SWRConfig>
     </ConfigProvider>
   );

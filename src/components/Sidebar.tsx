@@ -1,4 +1,6 @@
 import { Layout, Menu } from 'antd';
+import { Link, useLocation } from 'react-router-dom';
+import { SIDEBAR_ROUTES } from '../core-utils/routes';
 import type { UserSession } from '../types/auth';
 
 const { Sider } = Layout;
@@ -6,14 +8,22 @@ const { Sider } = Layout;
 interface SidebarProps {
   user: UserSession;
   onLogout: () => void;
+  /** From GET /api/auth/permissions (loaded with layout). */
+  permissions?: string[];
 }
 
-const items = [
-  { key: 'claims', label: 'Claims' },
-  { key: 'reports', label: 'Reports', disabled: true },
-];
+export default function Sidebar({ user, onLogout, permissions = [] }: SidebarProps) {
+  const location = useLocation();
+  const pathname = location.pathname.replace(/\/$/, '') || '/';
 
-export default function Sidebar({ user, onLogout }: SidebarProps) {
+  const items = SIDEBAR_ROUTES.filter((r) => permissions.includes(r.permission)).map((route) => ({
+    key: route.path,
+    label: <Link to={route.path}>{route.label}</Link>,
+  }));
+
+  const selectedKey = pathname === '/' ? '/claims' : pathname.split('/').slice(0, 2).join('/') || '/claims';
+  const selectedKeys = items.some((i) => i.key === selectedKey) ? [selectedKey] : [];
+
   return (
     <Sider
       theme="light"
@@ -25,7 +35,7 @@ export default function Sidebar({ user, onLogout }: SidebarProps) {
       </div>
       <Menu
         mode="inline"
-        defaultSelectedKeys={['claims']}
+        selectedKeys={selectedKeys}
         items={items}
         className="mt-2 border-none"
         style={{ height: 'calc(100vh - 8rem)' }}
