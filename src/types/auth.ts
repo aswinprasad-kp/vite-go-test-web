@@ -7,6 +7,8 @@ export interface UserSession {
   picture: string;
   role: string;
   token: string;
+  /** Phase 2 RBAC: BE = xpense:{route}:list|approve|... ; FE = xpensepanel:{route}:view|admin|... */
+  permissions?: string[];
 }
 
 /** Backend auth response after Google login (lowerCamelCase). */
@@ -17,6 +19,7 @@ export interface AuthBackendResponse {
   token: string;
   displayName?: string;
   avatarUrl?: string;
+  permissions?: string[];
 }
 
 /** Google profile from decoded ID token. */
