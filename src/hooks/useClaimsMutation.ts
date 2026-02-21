@@ -86,3 +86,20 @@ export function useUpdateClaimDraft(onSuccess?: () => void) {
     updateDraftError: error,
   };
 }
+
+async function deleteClaim(_key: string, { arg }: { arg: string }) {
+  await axiosInstance.delete(`${CLAIMS_KEY}/${arg}`);
+}
+
+export function useDeleteClaim(onSuccess?: () => void) {
+  const { trigger, isMutating, error } = useSWRMutation(CLAIMS_KEY, deleteClaim, {
+    onSuccess: () => {
+      onSuccess?.();
+    },
+  });
+  return {
+    deleteClaim: (claimId: string) => trigger(claimId),
+    isDeleting: isMutating,
+    deleteError: error,
+  };
+}

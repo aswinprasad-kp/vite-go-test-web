@@ -12,6 +12,8 @@ export interface Claim {
   expenseDate?: string;
   statusReason?: string;
   needSupervision?: 'none' | 'low' | 'high';
+  needLegalReview?: boolean;
+  reimbursableAmount?: string;
   aiAnalysis?: Record<string, unknown>;
   createdAt: string;
 }

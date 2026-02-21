@@ -1,21 +1,15 @@
 import { Badge, Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
 import type { UserSession } from '../types/auth';
+import { roleToDisplayLabel } from '../core-utils/format';
 
 interface TitleBarProps {
   user: UserSession;
   title?: string;
 }
 
-const roleBadge: Record<string, { color: string; text: string }> = {
-  admin: { color: 'red', text: 'Admin' },
-  finance_admin: { color: 'green', text: 'Finance' },
-  manager: { color: 'blue', text: 'Manager' },
-  employee: { color: 'default', text: 'Employee' },
-};
-
 export default function TitleBar({ user, title = 'Claims' }: TitleBarProps) {
-  const role = roleBadge[user.role] ?? { color: 'default', text: user.role };
+  const roleLabel = roleToDisplayLabel(user.role ?? '');
   const menuItems: MenuProps['items'] = [
     { key: 'profile', label: 'Profile', disabled: true },
     { key: 'settings', label: 'Settings', disabled: true },
@@ -28,7 +22,7 @@ export default function TitleBar({ user, title = 'Claims' }: TitleBarProps) {
       <div className="flex items-center gap-4">
         <Badge
           status="success"
-          text={<span className="text-sm text-slate-500">{role.text}</span>}
+          text={<span className="text-sm text-slate-500">{roleLabel}</span>}
         />
         <Dropdown menu={{ items: menuItems }} trigger={['click']} placement="bottomRight">
           <button

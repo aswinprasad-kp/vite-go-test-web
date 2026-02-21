@@ -1,5 +1,7 @@
-import ClaimsFiltersAndTable from '../components/claims/ClaimsFiltersAndTable';
+import ClaimsFiltersAndTable, { type ClaimsStatusTab } from '../components/claims/ClaimsFiltersAndTable';
 import type { Claim } from '../types/claim';
+
+export type { ClaimsStatusTab };
 
 interface DashboardProps {
   items: Claim[];
@@ -17,6 +19,10 @@ interface DashboardProps {
   onDisburse?: (claim: Claim) => void;
   onNewClaim?: () => void;
   onViewComparison?: (claim: Claim) => void;
+  onEditDraft?: (claim: Claim) => void;
+  onDeleteDraft?: (claim: Claim) => void;
+  statusTab?: ClaimsStatusTab;
+  onStatusTabChange?: (tab: ClaimsStatusTab) => void;
 }
 
 export default function Dashboard({
@@ -35,6 +41,10 @@ export default function Dashboard({
   onDisburse,
   onNewClaim,
   onViewComparison,
+  onEditDraft,
+  onDeleteDraft,
+  statusTab = '',
+  onStatusTabChange,
 }: DashboardProps) {
   return (
     <ClaimsFiltersAndTable
@@ -51,6 +61,10 @@ export default function Dashboard({
       onDisburse={onDisburse}
       onNewClaim={onNewClaim}
       onViewComparison={onViewComparison}
+      onEditDraft={onEditDraft}
+      onDeleteDraft={onDeleteDraft}
+      statusTab={statusTab}
+      onStatusTabChange={onStatusTabChange}
     />
   );
 }

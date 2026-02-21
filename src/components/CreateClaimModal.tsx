@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
-import { DatePicker, Form, Input, InputNumber, Modal, Select, Spin } from 'antd';
+import { Alert, DatePicker, Form, Input, InputNumber, message, Modal, Radio, Select, Spin } from 'antd';
 import {
   useCreateClaim,
   useGetClaim,
@@ -14,6 +14,8 @@ import type { CreateClaimRequest } from '../types/claim';
 type CreateClaimFormValues = Omit<CreateClaimRequest, 'expenseDate'> & {
   amountNum?: number;
   expenseDate?: Dayjs;
+  /** When category is Software or AI Purchase: reimburse only cap this month, or full and deduct from next. */
+  softwareReimburseOption?: 'cap_only' | 'full_deduct_next_month';
 };
 
 interface CreateClaimModalProps {
@@ -22,12 +24,16 @@ interface CreateClaimModalProps {
   onSuccess: () => void;
 }
 
-const categoryOptions = ['Meals', 'Travel', 'Supplies', 'Software', 'Other'];
+const MEALS_CAP = 200;
+const SOFTWARE_MONTHLY_CAP_USD = 20;
+
+const categoryOptions = ['Meals', 'Travel', 'Supplies', 'Software', 'AI Purchase', 'Other'];
 const categoryMap: Record<string, string> = {
   meals: 'Meals',
   travel: 'Travel',
   supplies: 'Supplies',
   software: 'Software',
+  'ai purchase': 'AI Purchase',
   other: 'Other',
 };
 function toFormCategory(categoryId?: string) {
@@ -52,6 +58,11 @@ export default function CreateClaimModal({
   const [receiptFile, setReceiptFile] = useState<File | undefined>();
   const [draftId, setDraftId] = useState<string | null>(null);
   const [step, setStep] = useState<'form' | 'uploading' | 'prefilled'>('form');
+
+  const category = Form.useWatch('category', form) ?? 'Other';
+  const amountNum = Form.useWatch('amountNum', form) ?? 0;
+  const showMealsCapWarning = category === 'Meals' && Number(amountNum) > MEALS_CAP;
+  const showSoftwareOption = category === 'Software' || category === 'AI Purchase';
 
   const { createClaim, isCreating } = useCreateClaim(onSuccess);
   const { uploadReceipt } = useUploadReceiptForClaim();
@@ -117,10 +128,11 @@ export default function CreateClaimModal({
         return;
       }
 
-      // No receipt: create claim with form data (manual)
-      await createClaim(payload);
-      form.resetFields();
-      onClose();
+      // Receipt is mandatory: must upload receipt first (no manual create without receipt)
+      if (!receiptFile && !draftId) {
+        message.warning('Please upload a receipt to create a claim.');
+        return;
+      }
     } catch {
       // validation or submit error – keep modal open
     }
@@ -166,10 +178,20 @@ export default function CreateClaimModal({
           name="amountNum"
           label="Amount"
           rules={[{ required: true, message: 'Enter amount' }]}
+          help={
+            showMealsCapWarning ? (
+              <Alert
+                type="warning"
+                showIcon
+                message={`Only INR ${MEALS_CAP} will be reimbursed for this day (policy cap). Amount over cap is not refunded.`}
+                className="mt-1"
+              />
+            ) : undefined
+          }
         >
           <InputNumber
             min={0}
-            step={0.01}
+            step={0.1}
             className="w-full"
             placeholder="0.00"
             disabled={isUploadingOrWaiting}
@@ -192,6 +214,19 @@ export default function CreateClaimModal({
             disabled={isUploadingOrWaiting}
           />
         </Form.Item>
+        {showSoftwareOption && (
+          <Form.Item
+            name="softwareReimburseOption"
+            label={`Reimburse option ($${SOFTWARE_MONTHLY_CAP_USD}/month cap)`}
+            initialValue="cap_only"
+            tooltip={`Reimburse only $${SOFTWARE_MONTHLY_CAP_USD} this month, or reimburse full amount and deduct the excess from next month's allowance.`}
+          >
+            <Radio.Group disabled={isUploadingOrWaiting}>
+              <Radio value="cap_only">Reimburse only ${SOFTWARE_MONTHLY_CAP_USD} this month (spill over ignored)</Radio>
+              <Radio value="full_deduct_next_month">Reimburse full now, deduct excess from next month</Radio>
+            </Radio.Group>
+          </Form.Item>
+        )}
         <Form.Item name="description" label="Description">
           <Input.TextArea
             rows={2}
@@ -199,7 +234,11 @@ export default function CreateClaimModal({
             disabled={isUploadingOrWaiting}
           />
         </Form.Item>
-        <Form.Item name="expenseDate" label="Expense date">
+        <Form.Item
+          name="expenseDate"
+          label="Expense date"
+          rules={[{ required: true, message: 'Expense date is required' }]}
+        >
           <DatePicker
             className="w-full"
             format="YYYY-MM-DD"
@@ -207,7 +246,12 @@ export default function CreateClaimModal({
           />
         </Form.Item>
         {step === 'form' && (
-          <Form.Item label="Receipt (optional – upload first to auto-fill)">
+          <Form.Item
+            label="Receipt"
+            required
+            validateStatus={!receiptFile && step === 'form' ? undefined : undefined}
+            help={!receiptFile ? 'Upload a receipt to create a claim (required)' : undefined}
+          >
             <Input
               type="file"
               accept="image/*,.pdf"
