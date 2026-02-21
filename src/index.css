@@ -38,7 +38,6 @@ body {
 
 .ant-layout {
   display: flex;
-  width: 100%;
   background: var(--xpense-bg) !important;
 }
 .ant-layout-content {

@@ -2,6 +2,8 @@
 export interface Claim {
   id: string;
   userId: string;
+  submitterEmail?: string;
+  submitterDisplayName?: string;
   amount: string;
   merchant: string;
   category: string;

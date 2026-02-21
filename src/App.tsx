@@ -10,6 +10,8 @@ import RouteProtector from './components/RouteProtector';
 import ClaimsPage from './pages/ClaimsPage';
 import AdminPage from './pages/AdminPage';
 import ReportsPage from './pages/ReportsPage';
+import TeamsPage from './pages/TeamsPage';
+import GroupsPage from './pages/GroupsPage';
 
 function fetcher(url: string) {
   return axiosInstance.get(url).then((res) => res.data);
@@ -31,7 +33,13 @@ function RootGate() {
     return <Login onAuthSuccess={setSession} />;
   }
 
-  return <DashboardLayout user={user} onLogout={handleLogout} />;
+  return (
+    <DashboardLayout
+      user={user}
+      onLogout={handleLogout}
+      setSession={setSession}
+    />
+  );
 }
 
 export default function App() {
@@ -63,6 +71,22 @@ export default function App() {
                 element={
                   <RouteProtector>
                     <ReportsPage />
+                  </RouteProtector>
+                }
+              />
+              <Route
+                path="teams"
+                element={
+                  <RouteProtector>
+                    <TeamsPage />
+                  </RouteProtector>
+                }
+              />
+              <Route
+                path="groups"
+                element={
+                  <RouteProtector>
+                    <GroupsPage />
                   </RouteProtector>
                 }
               />

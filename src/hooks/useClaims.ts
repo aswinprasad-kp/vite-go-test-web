@@ -42,3 +42,13 @@ export function useClaims(page: number, pageSize: number, status: string = '') {
     mutate,
   };
 }
+
+/** Fetches a single claim by ID (includes submitterEmail/submitterDisplayName from GET /api/claims/:id). */
+export function useClaim(claimId: string | null) {
+  const { data, error, isLoading, mutate } = useSWR<Claim>(
+    claimId ? `${CLAIMS_BASE}/${claimId}` : null,
+    (url: string) => axiosInstance.get<Claim>(url).then((r) => r.data),
+    { revalidateOnFocus: false }
+  );
+  return { claim: data ?? null, error, isLoading, mutate };
+}

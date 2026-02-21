@@ -36,6 +36,20 @@ export const ROUTES: RouteConfig[] = [
     sidebar: true,
     title: 'Admin',
   },
+  {
+    path: '/teams',
+    permission: 'xpensepanel:teams:view',
+    label: 'Teams',
+    sidebar: true,
+    title: 'Teams',
+  },
+  {
+    path: '/groups',
+    permission: 'xpensepanel:groups:view',
+    label: 'Groups',
+    sidebar: true,
+    title: 'Groups',
+  },
 ];
 
 /** Routes that appear in the sidebar (sidebar === true). */

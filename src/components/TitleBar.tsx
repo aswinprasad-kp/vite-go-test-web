@@ -1,4 +1,4 @@
-import { Badge, Dropdown } from 'antd';
+import { Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
 import type { UserSession } from '../types/auth';
 import { roleToDisplayLabel } from '../core-utils/format';
@@ -17,29 +17,29 @@ export default function TitleBar({ user, title = 'Claims' }: TitleBarProps) {
 
   const displayName = user.displayName ?? user.name;
   return (
-    <header className="flex flex-1 items-center justify-between">
-      <h1 className="text-xl font-semibold tracking-tight text-slate-800">{title}</h1>
-      <div className="flex items-center gap-4">
-        <Badge
-          status="success"
-          text={<span className="text-sm text-slate-500">{roleLabel}</span>}
-        />
+    <div className="flex min-w-0 flex-1 items-center justify-between gap-4">
+      <h1 className="truncate text-base font-semibold tracking-tight text-slate-800 sm:text-lg">{title}</h1>
+      <div className="flex shrink-0 items-center gap-3">
+        <span className="flex items-center gap-1.5 text-sm text-slate-500" style={{ lineHeight: 1 }}>
+          <span className="inline-block h-2 w-2 shrink-0 rounded-full bg-green-500" aria-hidden />
+          <span className="leading-none">{roleLabel}</span>
+        </span>
         <Dropdown menu={{ items: menuItems }} trigger={['click']} placement="bottomRight">
           <button
             type="button"
-            className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white/80 px-3 py-2 text-left shadow-sm transition-colors hover:bg-slate-50 focus:outline-none"
+            className="flex h-9 shrink-0 items-center gap-2 rounded-xl border border-slate-200 bg-white/80 pl-2 pr-3 shadow-sm transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[var(--xpense-primary)] focus:ring-offset-1"
           >
             <img
               src={user.picture}
               alt={displayName}
-              className="h-8 w-8 rounded-full border-2 border-slate-100 object-cover"
+              className="h-7 w-7 shrink-0 rounded-full border border-slate-100 object-cover"
             />
-            <span className="max-w-[160px] truncate text-sm font-medium text-slate-700">
+            <span className="max-w-[140px] truncate text-sm font-medium leading-none text-slate-700">
               {displayName}
             </span>
           </button>
         </Dropdown>
       </div>
-    </header>
+    </div>
   );
 }

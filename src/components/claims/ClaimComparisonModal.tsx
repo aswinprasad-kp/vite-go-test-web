@@ -2,6 +2,7 @@ import { Modal, Table, Image, Typography } from 'antd';
 import { ToolOutlined } from '@ant-design/icons';
 import type { Claim } from '../../types/claim';
 import { flagCodeToDisplayLabel } from '../../core-utils/format';
+import { useClaim } from '../../hooks/useClaims';
 
 const { Text } = Typography;
 
@@ -27,8 +28,10 @@ function formatAmount(val: string | undefined | null): string {
 export default function ClaimComparisonModal({
   open,
   onClose,
-  claim,
+  claim: claimFromList,
 }: ClaimComparisonModalProps) {
+  const { claim: fetchedClaim, isLoading } = useClaim(open && claimFromList ? claimFromList.id : null);
+  const claim = (fetchedClaim ?? claimFromList) as Claim | null;
   if (!claim) return null;
   const ai = claim.aiAnalysis as Record<string, unknown> | undefined;
   const aiAmount = ai?.amount != null ? String(ai.amount) : '—';
@@ -54,7 +57,15 @@ export default function ClaimComparisonModal({
         ? flags.map(flagCodeToDisplayLabel).join('; ')
         : null;
 
+  const claimantDisplay =
+    claim.submitterDisplayName?.trim() || claim.submitterEmail?.trim()
+      ? [claim.submitterDisplayName?.trim(), claim.submitterEmail?.trim()].filter(Boolean).join(' · ')
+      : claim.userId
+        ? `User ID: ${claim.userId.slice(0, 8)}…`
+        : '—';
+
   const rows: { field: string; user: string; ai: string }[] = [
+    { field: 'Claimant', user: claimantDisplay, ai: '—' },
     { field: 'Amount', user: userAmount, ai: formatAmount(aiAmount) },
     { field: 'Merchant', user: userMerchant, ai: aiVendor },
     { field: 'Category', user: userCategory, ai: aiCategory },
@@ -84,6 +95,9 @@ export default function ClaimComparisonModal({
           <ToolOutlined style={{ fontSize: 18, color: '#dc2626' }} />
           <span className="font-medium">Legal / policy violation detected (e.g. alcohol). Review before approving.</span>
         </div>
+      )}
+      {isLoading && (
+        <p className="mb-2 text-sm text-slate-500">Loading claimant details…</p>
       )}
       <Table
         dataSource={rows}
