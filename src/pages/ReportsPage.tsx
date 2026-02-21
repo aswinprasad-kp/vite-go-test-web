@@ -81,7 +81,7 @@ export default function ReportsPage() {
           </Card>
         </Col>
         <Col xs={24} sm={12} md={18}>
-          <Card title="Total Spend (donut)">
+          <Card title="Total Spend">
             {totalSpendData.length === 0 ? (
               <p className="text-slate-500 py-8 text-center">No spend data yet.</p>
             ) : (
