@@ -120,9 +120,10 @@ export default function GroupsPage() {
             onClick={() => setSelectedGroup(g)}
             title={g.name}
           >
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-slate-600 mb-1">
               {typeof g.memberCount === 'number' ? `${g.memberCount} member${g.memberCount !== 1 ? 's' : ''}` : '—'}
             </p>
+            <p className="text-xs text-slate-500 mb-0">Click to see accepted / pending</p>
           </Card>
         ))}
       </div>
@@ -258,6 +259,8 @@ function GroupDetailModal({
     },
   ];
 
+  const accepted = members.filter((m) => m.status === 'accepted').length;
+  const pending = members.filter((m) => m.status === 'pending').length;
   return (
     <Modal
       title={group.name}
@@ -267,6 +270,15 @@ function GroupDetailModal({
       width={640}
       destroyOnClose
     >
+      <p className="mb-4 text-sm text-slate-600">
+        {isLoading ? 'Loading…' : (
+          <>
+            <span className="font-medium text-green-700">Accepted: {accepted}</span>
+            {' · '}
+            <span className="font-medium text-amber-600">Pending: {pending}</span>
+          </>
+        )}
+      </p>
       <div className="mb-4 flex gap-2">
         <Input
           placeholder="Email to invite"

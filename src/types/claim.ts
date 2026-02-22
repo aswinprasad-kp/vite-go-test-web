@@ -1,3 +1,11 @@
+/** One reimbursement recipient (group claims). */
+export interface ReimbursementRecipient {
+  userId: string;
+  amount: string;
+  email?: string;
+  displayName?: string;
+}
+
 /** API claim shape (lowerCamelCase from backend). */
 export interface Claim {
   id: string;
@@ -16,11 +24,20 @@ export interface Claim {
   needSupervision?: 'none' | 'low' | 'high';
   needLegalReview?: boolean;
   reimbursableAmount?: string;
-  aiAnalysis?: Record<string, unknown>;
+  /** When AI receipt analysis fails (503, 429, etc.), backend stores { _aiError: { status, message } } here so FE can show it and stop polling. */
+  aiAnalysis?: Record<string, unknown> & {
+    _aiError?: { status: number; message: string };
+  };
   createdAt: string;
+  groupId?: string;
+  teamId?: string;
+  reimburseToUserId?: string;
+  reimburseToUserEmail?: string;
+  reimburseToUserDisplayName?: string;
+  reimbursementRecipients?: ReimbursementRecipient[];
 }
 
-/** Request body for PATCH /api/claims/:id (draft fields + optional submit). */
+/** Request body for PATCH /api/claims/:id (draft fields + optional submit). Must match backend UpdateClaimDraftRequest. */
 export interface UpdateClaimDraftRequest {
   amount?: string;
   merchant?: string;
@@ -28,6 +45,10 @@ export interface UpdateClaimDraftRequest {
   description?: string;
   expenseDate?: string;
   status?: string;
+  reimburseToUserId?: string;
+  groupId?: string;
+  teamId?: string;
+  reimbursementRecipients?: ReimbursementRecipient[];
 }
 
 /** Request body for creating a claim (lowerCamelCase). */
@@ -38,6 +59,10 @@ export interface CreateClaimRequest {
   description: string;
   receiptUrl?: string;
   expenseDate?: string;
+  groupId?: string;
+  teamId?: string;
+  reimburseToUserId?: string;
+  reimbursementRecipients?: ReimbursementRecipient[];
 }
 
 /** Request body for updating claim status. */

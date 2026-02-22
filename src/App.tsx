@@ -2,6 +2,7 @@ import { ConfigProvider } from 'antd';
 import { SWRConfig } from 'swr';
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { axiosInstance } from './core-utils/axiosInstance';
+import { DEFAULT_ROUTE_PATH } from './core-utils/routes';
 import { themeTokens } from './core-utils/theme';
 import { useAuth } from './hooks/useAuth';
 import Login from './Login';
@@ -49,7 +50,7 @@ export default function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<RootGate />}>
-              <Route index element={<Navigate to="/claims" replace />} />
+              <Route index element={<Navigate to={DEFAULT_ROUTE_PATH} replace />} />
               <Route
                 path="claims"
                 element={

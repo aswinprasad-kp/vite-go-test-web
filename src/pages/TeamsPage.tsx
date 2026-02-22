@@ -55,7 +55,8 @@ export default function TeamsPage() {
             title={t.name}
             extra={t.leaderId === user?.uid ? <span className="text-xs text-slate-500">Leader</span> : undefined}
           >
-            {t.description && <p className="text-sm text-slate-600">{t.description}</p>}
+            {t.description && <p className="text-sm text-slate-600 mb-2">{t.description}</p>}
+            <p className="text-xs text-slate-500 mb-0">Click to view members</p>
           </Card>
         ))}
       </div>
@@ -191,6 +192,7 @@ function TeamDetailModal({
     },
   ];
 
+  const memberCount = members.length;
   return (
     <Modal
       title={team.name}
@@ -200,7 +202,10 @@ function TeamDetailModal({
       width={640}
       destroyOnClose
     >
-      {team.description && <p className="mb-4 text-slate-600">{team.description}</p>}
+      {team.description && <p className="mb-2 text-slate-600">{team.description}</p>}
+      <p className="mb-4 text-sm text-slate-500">
+        {isLoading ? 'Loading…' : `${memberCount} member${memberCount !== 1 ? 's' : ''}`}
+      </p>
       <div className="mb-4 flex gap-2">
         <Input
           placeholder="Email to add"

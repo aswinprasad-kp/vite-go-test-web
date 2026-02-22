@@ -63,29 +63,55 @@ export default function ReportsPage() {
 
   const totalSpendData = summary.totalAmount >= 0 ? [{ name: 'Total Spend', value: 1, fill: '#3b82f6' }] : [];
 
+  const pendingCount = summary.statusCounts?.pending ?? 0;
+  const disbursedCount = summary.statusCounts?.disbursed ?? 0;
+
   return (
     <div className="w-full">
       <div className="mb-6 border-b border-slate-100 pb-4">
         <Title level={4} className="!mb-1">
           SpendLens
         </Title>
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-slate-500 mb-1">
           Summary of expense claims (based on your access: own claims or for-review list).
+        </p>
+        <p className="text-xs text-slate-400">
+          Use these metrics to see how many claims exist, how much is claimed vs reimbursed, and how they break down by status and category.
         </p>
       </div>
 
-      <Row gutter={[16, 16]} className="mb-6">
-        <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic title="Total claims" value={summary.totalClaims} />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={18}>
-          <Card title="Total Spend">
-            {totalSpendData.length === 0 ? (
-              <p className="text-slate-500 py-8 text-center">No spend data yet.</p>
-            ) : (
-              <ResponsiveContainer width="100%" height={240}>
+      {/* Grid: 1/3 left (2 cols), 2/3 right. Row 1: 2 small cards left, big card right (spans 2 rows). Row 2: 1 card spanning 2 cols left. */}
+      <div
+        className="mb-6 grid gap-4"
+        style={{
+          gridTemplateColumns: '1fr 1fr 2fr',
+          gridTemplateRows: 'auto auto',
+        }}
+      >
+        <Card style={{ gridColumn: 1, gridRow: 1 }}>
+          <Statistic title="Total claims" value={summary.totalClaims} />
+          <p className="text-xs text-slate-500 mt-2 mb-0">
+            All expense claims in scope (yours or the list you can review).
+          </p>
+        </Card>
+        <Card style={{ gridColumn: 2, gridRow: 1 }}>
+          <Statistic title="Pending" value={pendingCount} />
+          <p className="text-xs text-slate-500 mt-2 mb-0">
+            Claims submitted and awaiting approval.
+          </p>
+        </Card>
+        <Card
+          className="min-h-[260px] flex flex-col"
+          style={{ gridColumn: 3, gridRow: '1 / 3' }}
+          title="Total Spend"
+          extra={<span className="text-xs font-normal text-slate-400">Claimed vs reimbursed</span>}
+        >
+          <p className="text-xs text-slate-500 mb-2 -mt-1">Total amount claimed; center shows reimbursed so far.</p>
+          {totalSpendData.length === 0 ? (
+            <p className="text-slate-500 py-6 text-center flex-1">No spend data yet.</p>
+          ) : (
+            <div className="flex-1 min-h-[180px]">
+              <ResponsiveContainer width="100%" height={220}>
                 <PieChart>
                   <Pie
                     data={totalSpendData}
@@ -93,12 +119,12 @@ export default function ReportsPage() {
                     nameKey="name"
                     cx="50%"
                     cy="50%"
-                    innerRadius={72}
-                    outerRadius={96}
+                    innerRadius={60}
+                    outerRadius={82}
                     paddingAngle={0}
                     activeShape={(props: unknown) => {
                       const p = props as { outerRadius?: number; [k: string]: unknown };
-                      return <Sector {...p} outerRadius={(p.outerRadius ?? 96) + DONUT_ACTIVE_OFFSET} />;
+                      return <Sector {...p} outerRadius={(p.outerRadius ?? 82) + DONUT_ACTIVE_OFFSET} />;
                     }}
                   >
                     <Cell fill="#3b82f6" />
@@ -128,14 +154,27 @@ export default function ReportsPage() {
                   </text>
                 </PieChart>
               </ResponsiveContainer>
-            )}
-          </Card>
-        </Col>
-      </Row>
+            </div>
+          )}
+        </Card>
+        <Card style={{ gridColumn: 1, gridRow: 2 }}>
+          <Statistic title="Amount reimbursed" value={summary.totalReimbursedAmount ?? 0} prefix="$" precision={2} />
+          <p className="text-xs text-slate-500 mt-2 mb-0">
+            Total paid out so far (after disbursement).
+          </p>
+        </Card>
+        <Card style={{ gridColumn: 2, gridRow: 2 }}>
+          <Statistic title="Disbursed" value={disbursedCount} />
+          <p className="text-xs text-slate-500 mt-2 mb-0">
+            Claims already paid out to employees.
+          </p>
+        </Card>
+      </div>
 
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={12}>
           <Card title="Claims by status" className="h-full">
+            <p className="text-xs text-slate-500 mb-2">Breakdown by stage: draft, pending, approved, rejected, disbursed.</p>
             {statusData.length === 0 ? (
               <p className="text-slate-500 py-8 text-center">No claims data yet.</p>
             ) : (
@@ -156,6 +195,7 @@ export default function ReportsPage() {
         </Col>
         <Col xs={24} lg={12}>
           <Card title="Claims by category">
+            <p className="text-xs text-slate-500 mb-2">Breakdown by expense type (e.g. Meals, Software, Travel).</p>
             {categoryData.length === 0 ? (
               <p className="text-slate-500 py-8 text-center">No claims data yet.</p>
             ) : (

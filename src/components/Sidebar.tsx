@@ -1,6 +1,6 @@
 import { Menu } from 'antd';
 import { Link, useLocation } from 'react-router-dom';
-import { SIDEBAR_ROUTES } from '../core-utils/routes';
+import { DEFAULT_ROUTE_PATH, SIDEBAR_ROUTES } from '../core-utils/routes';
 import type { UserSession } from '../types/auth';
 
 const SIDEBAR_WIDTH = 220;
@@ -38,7 +38,7 @@ export default function Sidebar({ user, onLogout, permissions = [], open = true,
     ),
   }));
 
-  const selectedKey = pathname === '/' ? '/claims' : pathname.split('/').slice(0, 2).join('/') || '/claims';
+  const selectedKey = pathname === '/' ? DEFAULT_ROUTE_PATH : pathname.split('/').slice(0, 2).join('/') || DEFAULT_ROUTE_PATH;
   const selectedKeys = items.some((i) => i.key === selectedKey) ? [selectedKey] : [];
 
   const content = (

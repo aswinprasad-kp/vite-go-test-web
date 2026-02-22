@@ -117,6 +117,28 @@ export default function ClaimsFiltersAndTable({
         ]
       : []),
     {
+      title: 'Type',
+      key: 'claimType',
+      width: 88,
+      render: (_: unknown, r: Claim) => {
+        if (r.teamId) return <Tag color="blue">Team</Tag>;
+        if (r.groupId) return <Tag color="green">Group</Tag>;
+        return <Tag>Personal</Tag>;
+      },
+    },
+    {
+      title: 'Who filed',
+      key: 'submitter',
+      ellipsis: true,
+      width: 160,
+      render: (_: unknown, r: Claim) =>
+        r.submitterDisplayName?.trim() || r.submitterEmail?.trim()
+          ? [r.submitterDisplayName?.trim(), r.submitterEmail?.trim()].filter(Boolean).join(' · ')
+          : r.userId
+            ? `User ${r.userId.slice(0, 8)}…`
+            : '—',
+    },
+    {
       title: 'Description',
       dataIndex: 'description',
       key: 'description',
@@ -185,7 +207,7 @@ export default function ClaimsFiltersAndTable({
     columns.push({
       title: 'Actions',
       key: 'actions',
-      width: hasView ? 140 : 100,
+      width: hasView ? 160 : 180,
       fixed: 'right',
       align: 'right',
       render: (_, record) => {
