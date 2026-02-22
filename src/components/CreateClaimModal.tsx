@@ -93,6 +93,7 @@ export default function CreateClaimModal({
   const groupId = Form.useWatch('groupId', form);
   const teamId = Form.useWatch('teamId', form);
   const groupReimburseMode = Form.useWatch('groupReimburseMode', form) ?? 'full_to_me';
+  const splitRecipientsWatch = Form.useWatch('splitRecipients', form) ?? [];
   const showMealsCapWarning = category === 'Meals' && Number(amountNum) > MEALS_CAP;
   const showSoftwareOption = category === 'Software' || category === 'AI Purchase';
 
@@ -535,110 +536,129 @@ export default function CreateClaimModal({
                 </Form.Item>
         {claimFor === 'group' && (
           <>
-            <Form.Item name="groupId" label="Group" rules={[{ required: true, message: 'Select a group' }]}>
+            <Form.Item name="groupId" label="Group" rules={[{ required: true, message: 'Select a group' }]} className="mb-4">
               <Select
                 placeholder="Select group"
                 options={groups.map((g) => ({ label: g.name, value: g.id }))}
                 disabled={flowStep !== 'type'}
               />
             </Form.Item>
-            <Form.Item name="groupReimburseMode" initialValue="full_to_me">
+            <Form.Item name="groupReimburseMode" initialValue="full_to_me" className="mb-2">
               <Radio.Group disabled={flowStep !== 'type'}>
                 <Radio value="full_to_me">Full amount to me (I paid)</Radio>
                 <Radio value="split">Split reimbursement</Radio>
               </Radio.Group>
             </Form.Item>
             {groupReimburseMode === 'split' && (
-              <Form.List name="splitRecipients">
-                {(fields, { add, remove }) => (
-                  <>
-                    <div className="mb-1 flex flex-wrap items-center gap-2">
-                      <span className="text-sm font-medium">Who gets reimbursed</span>
-                      <Space size="small">
-                        <Button
-                          type="dashed"
-                          size="small"
-                          icon={<TeamOutlined />}
-                          onClick={() => {
-                            form.setFieldsValue({
-                              splitRecipients: acceptedGroupMembers.map((m) => ({ userId: m.userId, amount: 0 })),
-                            });
-                          }}
-                          disabled={!groupId || !acceptedGroupMembers.length || flowStep !== 'type'}
-                        >
-                          Add all from group
-                        </Button>
-                        <Button
-                          type="dashed"
-                          size="small"
-                          icon={<UserAddOutlined />}
-                          onClick={() => {
-                            setSelectFromGroupSelected(
-                              form.getFieldValue('splitRecipients')?.map((r: { userId: string }) => r.userId) ?? []
-                            );
-                            setSelectFromGroupOpen(true);
-                          }}
-                          disabled={!groupId || !acceptedGroupMembers.length || flowStep !== 'type'}
-                        >
-                          Select from group
-                        </Button>
-                        <Button type="dashed" onClick={() => add({ amount: 0 })} icon={<PlusOutlined />} size="small">
-                          Add one
-                        </Button>
-                      </Space>
-                    </div>
-                    <div className="mb-2 flex items-center gap-2">
-                      <span className="text-xs text-slate-500">Split amount:</span>
-                      <div className="inline-flex rounded-full border border-slate-200 bg-slate-100 p-0.5 text-sm">
-                        <button
-                          type="button"
-                          onClick={() => setSplitMode('auto')}
-                          className={`rounded-full px-3 py-1 transition-colors ${
-                            splitMode === 'auto' ? 'text-white shadow-sm' : 'text-slate-600 hover:text-slate-800'
-                          }`}
-                          style={splitMode === 'auto' ? { backgroundColor: 'var(--xpense-primary, #1890ff)', borderColor: 'var(--xpense-primary, #1890ff)' } : undefined}
-                        >
-                          Auto
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setSplitMode('manual')}
-                          className={`rounded-full px-3 py-1 transition-colors ${
-                            splitMode === 'manual' ? 'text-white shadow-sm' : 'text-slate-600 hover:text-slate-800'
-                          }`}
-                          style={splitMode === 'manual' ? { backgroundColor: 'var(--xpense-primary, #1890ff)', borderColor: 'var(--xpense-primary, #1890ff)' } : undefined}
-                        >
-                          Manual
-                        </button>
+              <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-4 mt-2">
+                <div className="text-sm font-medium text-slate-700 mb-3">Who gets reimbursed</div>
+                <Form.List name="splitRecipients">
+                  {(fields, { add, remove }) => (
+                    <>
+                <Space size="small" className="flex flex-wrap mb-4">
+                  <Button
+                    type="dashed"
+                    size="small"
+                    icon={<TeamOutlined />}
+                    onClick={() => {
+                      form.setFieldsValue({
+                        splitRecipients: acceptedGroupMembers.map((m) => ({ userId: m.userId, amount: 0 })),
+                      });
+                    }}
+                    disabled={!groupId || !acceptedGroupMembers.length || flowStep !== 'type'}
+                  >
+                    Add all from group
+                  </Button>
+                  <Button
+                    type="dashed"
+                    size="small"
+                    icon={<UserAddOutlined />}
+                    onClick={() => {
+                      setSelectFromGroupSelected(
+                        form.getFieldValue('splitRecipients')?.map((r: { userId: string }) => r.userId) ?? []
+                      );
+                      setSelectFromGroupOpen(true);
+                    }}
+                    disabled={!groupId || !acceptedGroupMembers.length || flowStep !== 'type'}
+                  >
+                    Select from group
+                  </Button>
+                  <Button type="dashed" onClick={() => add({ userId: undefined, amount: 0 })} icon={<PlusOutlined />} size="small">
+                    Add one
+                  </Button>
+                </Space>
+                      <div className="flex gap-2 items-center mb-2">
+                        <span className="text-xs text-slate-500 flex-1 min-w-0">Member</span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-xs text-slate-500">Amount</span>
+                          <div
+                            role="group"
+                            aria-label="Split amount mode"
+                            className="inline-flex rounded border border-slate-200 bg-white p-0.5 text-xs"
+                          >
+                            <button
+                              type="button"
+                              onClick={() => setSplitMode('auto')}
+                              className={`cursor-pointer rounded px-2 py-0.5 transition-colors ${
+                                splitMode === 'auto' ? 'text-white' : 'text-slate-600 hover:bg-slate-100'
+                              }`}
+                              style={splitMode === 'auto' ? { backgroundColor: 'var(--xpense-primary, #1890ff)' } : {}}
+                              title="Equal split after AI extraction"
+                            >
+                              Auto
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setSplitMode('manual')}
+                              className={`cursor-pointer rounded px-2 py-0.5 transition-colors ${
+                                splitMode === 'manual' ? 'text-white' : 'text-slate-600 hover:bg-slate-100'
+                              }`}
+                              style={splitMode === 'manual' ? { backgroundColor: 'var(--xpense-primary, #1890ff)' } : {}}
+                              title="Enter amount per person"
+                            >
+                              Manual
+                            </button>
+                          </div>
+                        </div>
+                        <span className="w-10 shrink-0" aria-hidden />
                       </div>
-                      <span className="text-xs text-slate-500">
-                        {splitMode === 'auto' ? 'Equal split after AI extraction' : 'Enter amount per person'}
-                      </span>
-                    </div>
-                    {fields.map(({ key, name }) => (
-                      <div key={key} className="mb-2 flex gap-2 items-center">
-                        <Form.Item name={[name, 'userId']} rules={[{ required: true }]} noStyle className="flex-1 min-w-0">
-                          <Select
-                            placeholder="Member"
-                            options={acceptedGroupMembers.map((m) => ({ label: m.email ?? m.userId, value: m.userId }))}
-                            disabled={flowStep !== 'type'}
-                          />
-                        </Form.Item>
-                        <Form.Item name={[name, 'amount']} noStyle initialValue={0}>
-                          <InputNumber
-                            min={0}
-                            step={0.01}
-                            className="w-24"
-                            placeholder={splitMode === 'auto' ? 'Auto' : '0'}
-                            disabled={splitMode === 'auto'}
-                          />
-                        </Form.Item>
-                        <Button type="text" danger icon={<MinusCircleOutlined />} onClick={() => remove(name)} />
+                      <div className="space-y-2">
+                        {fields.map(({ key, name }) => {
+                          const selectedElsewhere = (splitRecipientsWatch as { userId?: string }[])
+                            .filter((_, i) => i !== name)
+                            .map((r) => r.userId)
+                            .filter(Boolean) as string[];
+                          const memberOptions = acceptedGroupMembers
+                            .filter((m) => !selectedElsewhere.includes(m.userId))
+                            .map((m) => ({ label: m.email ?? m.userId, value: m.userId }));
+                          return (
+                            <div key={key} className="flex gap-2 items-center">
+                              <Form.Item name={[name, 'userId']} rules={[{ required: true, message: 'Select a member' }]} noStyle className="flex-1 min-w-0">
+                                <Select
+                                  placeholder="Select member"
+                                  options={memberOptions}
+                                  disabled={flowStep !== 'type'}
+                                  allowClear
+                                />
+                              </Form.Item>
+                              <Form.Item name={[name, 'amount']} noStyle initialValue={0} className="mb-0 shrink-0">
+                                <InputNumber
+                                  min={0}
+                                  step={0.01}
+                                  className="min-w-[8rem] w-36"
+                                  placeholder={splitMode === 'auto' ? 'Auto' : '0'}
+                                  disabled={splitMode === 'auto'}
+                                />
+                              </Form.Item>
+                              <Button type="text" danger icon={<MinusCircleOutlined />} onClick={() => remove(name)} aria-label="Remove" className="shrink-0" />
+                            </div>
+                          );
+                        })}
                       </div>
-                    ))}
-                  </>
-                )}
-              </Form.List>
+                    </>
+                  )}
+                </Form.List>
+              </div>
             )}
           </>
         )}
@@ -727,7 +747,7 @@ export default function CreateClaimModal({
                             </Form.Item>
                             <span className="flex-1 min-w-0 truncate text-sm text-slate-700" title={String(label)}>{label}</span>
                             <Form.Item name={[name, 'amount']} rules={[{ required: true, message: 'Amount' }]} noStyle className="mb-0">
-                              <InputNumber min={0} step={0.01} className="w-28" placeholder="0" />
+                              <InputNumber min={0} step={0.01} className="min-w-[8rem] w-36" placeholder="0" />
                             </Form.Item>
                           </div>
                         );

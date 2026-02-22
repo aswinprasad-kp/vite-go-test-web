@@ -13,15 +13,11 @@ export interface RouteConfig {
   title: string;
 }
 
-/** All app routes and their required permissions. Add new routes here. */
+/** Path that "/" redirects to. Sidebar always shows this route first. */
+export const DEFAULT_ROUTE_PATH = '/reports';
+
+/** All app routes and their required permissions. Order = sidebar order (default route is always moved to first). Add new routes here. */
 export const ROUTES: RouteConfig[] = [
-  {
-    path: '/claims',
-    permission: 'xpensepanel:claims:view',
-    label: 'Claims',
-    sidebar: true,
-    title: 'Claims',
-  },
   {
     path: '/reports',
     permission: 'xpensepanel:reports:view',
@@ -30,11 +26,11 @@ export const ROUTES: RouteConfig[] = [
     title: 'SpendLens',
   },
   {
-    path: '/admin',
-    permission: 'xpensepanel:admin:admin',
-    label: 'Admin',
+    path: '/claims',
+    permission: 'xpensepanel:claims:view',
+    label: 'Claims',
     sidebar: true,
-    title: 'Admin',
+    title: 'Claims',
   },
   {
     path: '/teams',
@@ -50,10 +46,23 @@ export const ROUTES: RouteConfig[] = [
     sidebar: true,
     title: 'Groups',
   },
+  {
+    path: '/admin',
+    permission: 'xpensepanel:admin:admin',
+    label: 'Admin',
+    sidebar: true,
+    title: 'Admin',
+  },
 ];
 
-/** Routes that appear in the sidebar (sidebar === true). */
-export const SIDEBAR_ROUTES = ROUTES.filter((r) => r.sidebar);
+/** Routes that appear in the sidebar. Default route (DEFAULT_ROUTE_PATH) is always first; rest follow ROUTES order. */
+export const SIDEBAR_ROUTES = (() => {
+  const withSidebar = ROUTES.filter((r) => r.sidebar);
+  const defaultIdx = withSidebar.findIndex((r) => r.path === DEFAULT_ROUTE_PATH);
+  if (defaultIdx <= 0) return withSidebar;
+  const defaultRoute = withSidebar[defaultIdx];
+  return [defaultRoute, ...withSidebar.slice(0, defaultIdx), ...withSidebar.slice(defaultIdx + 1)];
+})();
 
 /**
  * Get required permission for a path. Exact match first, then prefix match for dynamic segments.
